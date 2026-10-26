@@ -15,11 +15,18 @@ form{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bott
 table{border-collapse:collapse;width:100%;font-size:14px}td{border-bottom:1px solid var(--bd);padding:4px}
 #menu{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;z-index:9}#menu.on{display:flex}#mnav{display:flex;gap:6px;overflow-x:auto;padding:8px 12px}
 #mout{flex:1;overflow-y:auto;padding:0 12px 30px}.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px;margin:8px 0}
+.big{font-size:18px;font-weight:600;margin:4px 0}.next{background:rgba(10,108,255,.12);border-radius:10px;padding:8px;margin:8px 0}.ok{color:#1e9e4a;font-size:13px;font-weight:600}.gl{color:var(--mut);font-weight:400;font-size:.9em}
+details summary{cursor:pointer;color:var(--acc);min-height:40px;display:flex;align-items:center}
+.start{display:grid;gap:8px;margin:8px 0}.sb{display:flex;align-items:center;gap:12px;min-height:60px;font-size:18px;font-weight:600;border-radius:14px;border:1px solid var(--bd);background:var(--bg);color:var(--fg);padding:0 14px;text-align:left}.sb span{font-size:24px}
+#wz{position:fixed;inset:0;background:var(--bg);z-index:20;display:none;flex-direction:column}#wz.on{display:flex}#wzb{flex:1;overflow-y:auto;padding:16px}#wzb h2{font-size:22px;margin:4px 0 10px}.wbody{font-size:17px}
+#wzbtn{display:flex;flex-direction:column;gap:10px;padding:12px 16px calc(14px + env(safe-area-inset-bottom))}.wb{min-height:64px;font-size:20px;font-weight:700;border-radius:14px;border:1px solid var(--bd);background:var(--card);color:var(--fg)}.wb.yes{background:#1e9e4a;color:#fff;border:0}.wb.no{background:#c8372d;color:#fff;border:0}
+.warn{background:#c8372d;color:#fff;border-radius:12px;padding:12px;font-weight:700;margin-bottom:10px}.probe{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;font-size:18px;line-height:1.8}
+.steps li{margin:8px 0}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.grid8{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}.num{min-height:56px;font-size:20px;font-weight:700;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--fg)}
 </style></head><body>
 <header><h1>⚡ HLB Bot</h1><select class=ib id=lt aria-label="Lift type"><option value=sliding>Sliding car doors</option><option value=none>No car doors</option></select><button class=ib id=mbtn>☰ Browse</button><button class=ib id=clr title="Clear">↺</button></header>
 <div id=log></div>
-<form id=f><input id=q placeholder="Describe the fault… e.g. E 05, won't move" autocomplete=off enterkeyhint=send><button id=send>Send</button></form>
-<div id=menu><header><h1>Browse</h1><button class=ib id=mclose>✕ Chat</button></header><div id=mnav></div><div id=mout></div></div>
+<form id=f><input id=q placeholder="Or type it… e.g. E 14, doors stuck" autocomplete=off enterkeyhint=send><button id=send>Send</button></form>
+<div id=wz><header><button class=ib id=wzback>← Back</button><h1></h1><button class=ib id=wzx>✕ Close</button></header><div id=wzb></div><div id=wzbtn></div></div><div id=menu><header><h1>Browse</h1><button class=ib id=mclose>✕ Chat</button></header><div id=mnav></div><div id=mout></div></div>
 <script>
 const D={
  "source": [
@@ -33,7 +40,9 @@ const D={
    "meaning": "No errors.",
    "causes": [],
    "checks": [],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "No fault stored.",
+   "next": "Nothing to fix here \u2013 check the next error in the list."
   },
   {
    "code": 1,
@@ -47,7 +56,9 @@ const D={
     "Check car actually moving / drive status; check magnetic sensors via 'imp:' (manual p17).",
     "Check magnet/sensor placement (schematic sheet 25A/25B, PDF p57-58)."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "The lift tried to travel but took too long to get there.",
+   "next": "Check the car actually moves and the floor sensors (IA/ID) see their magnets."
   },
   {
    "code": 2,
@@ -63,7 +74,9 @@ const D={
     "Check main contactor M / contactors for welded contacts (sheet 3).",
     "Reset: RST 00>1 per manual."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "The controller thinks a motor contactor (big relay) is stuck on.",
+   "next": "Look at the contactors for one that is stuck in; then reset."
   },
   {
    "code": 3,
@@ -78,7 +91,9 @@ const D={
     "Check J2 IN02 wiring on schematic sheet 9 (PDF p18).",
     "Reset: RST 00>1."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "Safety input S2 failed \u2013 usually the start of the safety chain.",
+   "next": "Check the 2A safety fuse F5, then reset."
   },
   {
    "code": 4,
@@ -90,7 +105,9 @@ const D={
     "Check 'sic:' bits SAC and SCA (manual p18).",
     "For Magnetic Door landing doors check MGD card & bus (schematic sheet 23, PDF p55)."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "At switch-on a landing door was open.",
+   "next": "Go round the floors and make sure every landing door is shut and locked."
   },
   {
    "code": 5,
@@ -102,7 +119,9 @@ const D={
     "Check MGD dip-switch 1 = ON and floor address dip 2-5 (manual p7).",
     "Check F6 3.15A bus power fuse (legend sheet 28)."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "At switch-on the controller couldn't talk to a door card over the data cable.",
+   "next": "Check the data cable (RS485) and power to the door cards."
   },
   {
    "code": 6,
@@ -114,7 +133,9 @@ const D={
     "Check door for obstruction / M menu current settings (manual p14).",
     "Check bus as for code 5."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "A landing door motor took too long, or its door card stopped talking.",
+   "next": "Check the landing door isn't jammed and its card is powered and connected."
   },
   {
    "code": 7,
@@ -128,7 +149,9 @@ const D={
     "Check/replace F5 2A; find the short before replacing (safety circuit sheets 7B-7D, PDF p11-13).",
     "Fix the cause, then reset with RST 00>1 (programmer) or flick maintenance switch NORMAL\u2192INSPECTION\u2192NORMAL (manual p10; schematic sheet 32A)."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "While moving, the safety fuse F5 (2A) blew.",
+   "next": "Find the short before you replace F5, then reset."
   },
   {
    "code": 8,
@@ -148,7 +171,9 @@ const D={
     "Shaft devices wiring: sheet 24 (PDF p56).",
     "Fix the cause, then reset with RST 00>1 (programmer) or flick maintenance switch NORMAL\u2192INSPECTION\u2192NORMAL (manual p10; schematic sheet 32A)."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "While moving, a shaft/pit safety switch opened.",
+   "next": "Check the pit switches, pit prop, governor and its rope switch."
   },
   {
    "code": 9,
@@ -167,7 +192,9 @@ const D={
     "Walk series 2 \u2192 2/1 \u2192 2/2 \u2192 2/3 \u2192 3 (sheet 32A).",
     "Car top terminals: sheet 6B/6C (PDF p9-10)."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "While moving, a car safety opened (car-top stop, hatch, stop button, limits, safety gear).",
+   "next": "Check the car-top stop and inspection switch, roof hatch, and car stop button."
   },
   {
    "code": 10,
@@ -181,7 +208,9 @@ const D={
     "Check SAC on each landing door between terminals 3\u21925 (sheet 32A).",
     "Landing door lock wiring sheets 20A-20E (PDF p31-36)."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "While moving, a landing door 'closed' contact opened.",
+   "next": "Check each landing door is fully shut."
   },
   {
    "code": 11,
@@ -195,7 +224,9 @@ const D={
     "Check SCA on each landing door between terminals 5\u21926 (sheet 32A).",
     "Lock connections sheets 20A-20E; lock release delay T16."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "While moving, a landing door lock contact opened.",
+   "next": "Check each landing door lock is properly engaged."
   },
   {
    "code": 12,
@@ -210,7 +241,9 @@ const D={
     "Check terminals 6 \u2192 6/1 \u2192 9 (sheet 32A\u201332D).",
     "Car door / light curtain sheets 21C-21O (PDF p37-49)."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "While moving, the car door contact or light curtain opened.",
+   "next": "Check the car door is fully closed and nothing blocks the light curtain."
   },
   {
    "code": 13,
@@ -224,7 +257,9 @@ const D={
     "Check/replace F5 2A, locate short first.",
     "Fix the cause, then reset with RST 00>1 (programmer) or flick maintenance switch NORMAL\u2192INSPECTION\u2192NORMAL (manual p10; schematic sheet 32A)."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "Lift standing still: safety fuse F5 (2A) blew.",
+   "next": "Find the short before replacing F5, then reset."
   },
   {
    "code": 14,
@@ -238,7 +273,9 @@ const D={
     "Walk AME, SAF, STF, SPU, SLM, STLM (sheet 32A).",
     "After pit access, reset per sheet 32A: RST 00>1; or short MAN\u201324B for 1 s; or maintenance switch NORMAL\u2192INSPECTION\u2192NORMAL; or press a floor/car button 6 times within 6\u201310 s."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "Lift standing still: a shaft/pit safety switch is open.",
+   "next": "Check the pit stop, pit entry switch, pit prop, governor and rope switch \u2013 then reset."
   },
   {
    "code": 15,
@@ -251,7 +288,9 @@ const D={
     "Connect programmer, press ENTER from CpuCab screen to 'sic:' and find which J3 bit is 0 (manual p18).",
     "Check car stop STP, hatch SBO, maintenance stop SPM/PM, SEC, SAR (sheet 32A)."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "Lift standing still: a car safety is open (stop buttons, hatch, inspection, limits, safety gear).",
+   "next": "Check the car-top stop/inspection switch, roof hatch and car stop button."
   },
   {
    "code": 16,
@@ -262,7 +301,9 @@ const D={
     "Check IA/ID sensors via 'imp:' (manual p17).",
     "Check magnet placement & stopping space (sheet 25A/25B, PDF p57-58)."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "Car at the floor but not level.",
+   "next": "Check the levelling sensors (IA/ID) and their magnets at that floor."
   },
   {
    "code": 17,
@@ -273,7 +314,9 @@ const D={
     "Check IA/ID, ZX, magnets (sheet 25A/B).",
     "Check T10/T11 sliding times."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "Car didn't level properly when arriving.",
+   "next": "Check the levelling sensors and magnets at that floor."
   },
   {
    "code": 18,
@@ -283,7 +326,9 @@ const D={
    "checks": [
     "Check IA/ID sensors and magnets (sheet 25A/B)."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "Car went out of level while the doors were opening.",
+   "next": "Check levelling sensors and magnets at that floor."
   },
   {
    "code": 19,
@@ -293,7 +338,9 @@ const D={
    "checks": [
     "Check IA/ID sensors and magnets (sheet 25A/B)."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "Car went out of level with the doors open.",
+   "next": "Check levelling sensors and magnets at that floor."
   },
   {
    "code": 20,
@@ -303,7 +350,9 @@ const D={
    "checks": [
     "Check IA/ID sensors and magnets (sheet 25A/B)."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "Car went out of level while the doors were closing.",
+   "next": "Check levelling sensors and magnets at that floor."
   },
   {
    "code": 21,
@@ -315,7 +364,9 @@ const D={
     "Car display DL1 fast blinking = broken link or incorrect serial (manual p3).",
     "Check F6 3.15A bus fuse."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "Problems on the data cable (RS485) between the controller and displays/door cards.",
+   "next": "Check the data cable connections and screening."
   },
   {
    "code": 22,
@@ -326,7 +377,9 @@ const D={
     "Check door operator / obstruction.",
     "Check K6 APA / K7 APB relays & 'out1:' (manual p19)."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "The door tried to open too many times and gave up.",
+   "next": "Check the door isn't jammed and the door operator gets the open signal."
   },
   {
    "code": 23,
@@ -337,7 +390,9 @@ const D={
     "Check obstruction, photocell/light curtain FT/FT1.",
     "Check K5 CP close relay, F29 (4th close attempt)."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "The door tried to close too many times and gave up.",
+   "next": "Check for something in the doorway or a blocked light curtain."
   },
   {
    "code": 24,
@@ -347,7 +402,9 @@ const D={
    "checks": [
     "No further detail in manual. View trips in STS 01."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "Maximum number of trips reached.",
+   "next": "The manual gives no more detail \u2013 contact ELTEC."
   },
   {
    "code": 25,
@@ -357,7 +414,9 @@ const D={
    "checks": [
     "Check car door operator and PC/PC1 contacts (sheets 21E-21O)."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "The car door took too long to close.",
+   "next": "Check the car door operator and the car door contact."
   },
   {
    "code": 26,
@@ -368,7 +427,9 @@ const D={
     "Check car door close and locks (SCA, LKE/LKM).",
     "Check T03 delay door contact\u2192lock."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "After arriving, the doors and locks didn't close within 12 seconds.",
+   "next": "Check the car door closes and the landing door lock engages."
   },
   {
    "code": 27,
@@ -378,7 +439,9 @@ const D={
    "checks": [
     "Review F menu (e.g. F08 floors, F00-F02 display, F09-F18 doors); MEM 00>1 then RST 03>1."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "The controller settings don't make sense.",
+   "next": "Check the F menu settings (e.g. number of floors), save and reboot."
   },
   {
    "code": 28,
@@ -392,7 +455,9 @@ const D={
     "Reset Toshiba drive: press STOP twice or power off >10 s (sheet 32A).",
     "Note: manual says RST 02 is for HLG gearless inverter."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "The inverter (motor drive) has an alarm.",
+   "next": "Look at the drive display, then reset the drive."
   },
   {
    "code": 29,
@@ -404,7 +469,9 @@ const D={
     "Threshold F23 (default 512).",
     "RST 00>1 then power cycle main power."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "The motor got too hot (PTC sensor).",
+   "next": "Let the motor cool, then reset and switch the power off and on."
   },
   {
    "code": 30,
@@ -414,7 +481,9 @@ const D={
    "checks": [
     "Check IA/ID and magnets; T09 levelling delay."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "The car didn't level within 10 seconds.",
+   "next": "Check levelling sensors and magnets."
   },
   {
    "code": 31,
@@ -425,7 +494,9 @@ const D={
     "Check batteries (2\u00d7 12V 1.3Ah BAT7/BAT8 in car roof panel, sheet 7B) and battery pack (sheet 2, PDF p4).",
     "Check F1 6.3A battery supply fuse."
    ],
-   "ref": "ED1 manual E-DOC-00000035 p15-16"
+   "ref": "ED1 manual E-DOC-00000035 p15-16",
+   "plain": "The emergency battery is below 20V.",
+   "next": "Check/replace the emergency batteries and the battery fuse F1."
   }
  ],
  "io": [
@@ -2325,16 +2396,17 @@ const D={
   },
   {
    "id": "STP",
-   "device": "STP",
-   "desc": "Stop in the car",
-   "location": "Car (COP)",
+   "device": "Link 2/1\u21922/2",
+   "desc": "Wire link \u2013 no STP car stop on sliding-door lifts (STP is only on swing-door lifts)",
+   "location": "Car-top MC terminal strip",
    "t_in": "2/1",
    "t_out": "2/2",
    "monitor": "IS3 (J3,4)",
-   "err_move": 9,
-   "err_stop": 15,
-   "inferred": "Sheet 32D lists STP at 2/1\u21922/2, but the 7D drawing shows no STP and the legend says STP is 'only without cabin doors' \u2013 may be absent/linked on sliding-door lifts",
-   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   "err_move": null,
+   "err_stop": null,
+   "inferred": "",
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)",
+   "confirmed": "Confirmed on site (Josh, 26 Oct 2026)"
   },
   {
    "id": "SEC",
@@ -2372,7 +2444,7 @@ const D={
    "monitor": "IS4 (J3,5) branch",
    "err_move": null,
    "err_stop": null,
-   "inferred": "Branch off terminal 3, not in main series to 9FS. No error code references IS4; meaning of VF5+ only 'contact in the electronic card of the Fermator sliding doors' (manual p18)",
+   "inferred": "Branch off terminal 3, not in main series to 9FS. No error code references IS4; meaning of VF5+ only 'contact in the electronic card of the Fermator sliding doors' (manual p18) \u2013 parked for later (Josh)",
    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   },
   {
@@ -2385,21 +2457,22 @@ const D={
    "monitor": "IS4 (J3,5) branch",
    "err_move": null,
    "err_stop": null,
-   "inferred": "Single entrance: 3/1 presumably linked to 4 (inferred)",
+   "inferred": "Single entrance: 3/1 presumably linked to 4 (inferred) \u2013 parked for later (Josh)",
    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   },
   {
    "id": "SAC",
-   "device": "SAC",
-   "desc": "Landing door CLOSED contacts (all floors)",
-   "location": "Landing doors",
+   "device": "Bridge 3\u21925 (SAC bridged)",
+   "desc": "SAC landing door closed contact is bridged on sliding-door lifts, so IS5 follows IS3",
+   "location": "Car-top MC terminal strip",
    "t_in": "3",
    "t_out": "5",
    "monitor": "IS5 (J3,6)",
-   "err_move": 10,
+   "err_move": null,
    "err_stop": null,
-   "inferred": "7D drawing shows a link 3\u21925 across the top; on automatic sliding landing doors SAC may be bridged (inferred \u2013 check on site)",
-   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   "inferred": "",
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)",
+   "confirmed": "Confirmed on site (Josh, 26 Oct 2026)"
   },
   {
    "id": "SCA",
@@ -2650,16 +2723,17 @@ const D={
    },
    {
     "id": "STP",
-    "device": "STP",
-    "desc": "Stop in the car",
-    "location": "Car (COP)",
+    "device": "Link 2/1\u21922/2",
+    "desc": "Wire link \u2013 no STP car stop on sliding-door lifts (STP is only on swing-door lifts)",
+    "location": "Car-top MC terminal strip",
     "t_in": "2/1",
     "t_out": "2/2",
     "monitor": "IS3 (J3,4)",
-    "err_move": 9,
-    "err_stop": 15,
-    "inferred": "Sheet 32D lists STP at 2/1\u21922/2, but the 7D drawing shows no STP and the legend says STP is 'only without cabin doors' \u2013 may be absent/linked on sliding-door lifts",
-    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+    "err_move": null,
+    "err_stop": null,
+    "inferred": "",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)",
+    "confirmed": "Confirmed on site (Josh, 26 Oct 2026)"
    },
    {
     "id": "SEC",
@@ -2697,7 +2771,7 @@ const D={
     "monitor": "IS4 (J3,5) branch",
     "err_move": null,
     "err_stop": null,
-    "inferred": "Branch off terminal 3, not in main series to 9FS. No error code references IS4; meaning of VF5+ only 'contact in the electronic card of the Fermator sliding doors' (manual p18)",
+    "inferred": "Branch off terminal 3, not in main series to 9FS. No error code references IS4; meaning of VF5+ only 'contact in the electronic card of the Fermator sliding doors' (manual p18) \u2013 parked for later (Josh)",
     "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
    },
    {
@@ -2710,21 +2784,22 @@ const D={
     "monitor": "IS4 (J3,5) branch",
     "err_move": null,
     "err_stop": null,
-    "inferred": "Single entrance: 3/1 presumably linked to 4 (inferred)",
+    "inferred": "Single entrance: 3/1 presumably linked to 4 (inferred) \u2013 parked for later (Josh)",
     "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
    },
    {
     "id": "SAC",
-    "device": "SAC",
-    "desc": "Landing door CLOSED contacts (all floors)",
-    "location": "Landing doors",
+    "device": "Bridge 3\u21925 (SAC bridged)",
+    "desc": "SAC landing door closed contact is bridged on sliding-door lifts, so IS5 follows IS3",
+    "location": "Car-top MC terminal strip",
     "t_in": "3",
     "t_out": "5",
     "monitor": "IS5 (J3,6)",
-    "err_move": 10,
+    "err_move": null,
     "err_stop": null,
-    "inferred": "7D drawing shows a link 3\u21925 across the top; on automatic sliding landing doors SAC may be bridged (inferred \u2013 check on site)",
-    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+    "inferred": "",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)",
+    "confirmed": "Confirmed on site (Josh, 26 Oct 2026)"
    },
    {
     "id": "SCA",
@@ -3039,13 +3114,8 @@ const D={
     "\u2014"
    ],
    [
-    "2/2",
-    "STP",
-    "\u2014"
-   ],
-   [
     "2/3",
-    "SEC",
+    "SEC (2/1\u21922/2 is a link)",
     "\u2014"
    ],
    [
@@ -3054,13 +3124,8 @@ const D={
     "IS3"
    ],
    [
-    "5",
-    "SAC landing doors closed",
-    "IS5"
-   ],
-   [
     "6",
-    "SCA landing doors locked",
+    "SCA landing door locks (3\u21925 bridged)",
     "IS6"
    ],
    [
@@ -3150,6 +3215,47 @@ const D={
    "32D tips \u2013 sliding doors chain (PDF p68)",
    "20C sliding landing door lock connection (PDF p34)"
   ]
+ },
+ "glossary": {
+  "SAF": "pit entry switch",
+  "STF": "pit stop switch",
+  "SPU": "pit prop switch",
+  "SLM": "governor switch",
+  "STLM": "governor rope switch",
+  "AME": "emergency key switch",
+  "SPM": "car-top stop button",
+  "PM": "inspection switch",
+  "SBO": "roof hatch switch",
+  "STP": "car stop button",
+  "SEC": "overtravel limit switch",
+  "SAR": "safety gear switch",
+  "SAC": "landing door closed contact",
+  "SCA": "landing door lock contact",
+  "PC": "car door contact side A",
+  "PC1": "car door contact side B",
+  "FT": "light curtain",
+  "FT1": "light curtain side B",
+  "VF5+": "door operator OK contact",
+  "F5": "2A safety fuse",
+  "IS1": "safety input 1",
+  "IS2": "safety input 2",
+  "IS3": "safety input 3",
+  "IS4": "safety input 4",
+  "IS5": "safety input 5",
+  "IS6": "safety input 6",
+  "IS7": "safety input 7",
+  "RS485": "data cable",
+  "MGD": "magnetic door card",
+  "APA": "open-door relay A",
+  "APB": "open-door relay B",
+  "CP": "close-door relay",
+  "PTC": "motor temp sensor",
+  "IA": "down levelling sensor",
+  "ID": "up levelling sensor",
+  "RT": "reset sensor",
+  "ZX": "floor counter sensor",
+  "9FS": "end of safety chain",
+  "MC": "car-top terminal strip"
  }
 };
 const $=s=>document.querySelector(s),e=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -3160,7 +3266,7 @@ function chips(list){if(!list||!list.length)return;const d=document.createElemen
 const pad=n=>String(n).padStart(2,"0");
 const FX=c=>D.faults.find(f=>f.code==c);
 // ---------- renderers ----------
-function faultHTML(f){const ann=f.causes.filter(c=>/^Annotation/i.test(c)),cs=f.causes.filter(c=>!/^Annotation/i.test(c));
+let faultHTML=function(f){f=TYPE=='sliding'?{...f,checks:f.checks.map(c=>c.replace(/32A/g,'32D'))}:f;const ann=f.causes.filter(c=>/^Annotation/i.test(c)),cs=f.causes.filter(c=>!/^Annotation/i.test(c));
  const segs=CM().filter(s=>s.err_move==f.code||s.err_stop==f.code);
  return `<h3>E ${pad(f.code)} · ${e(f.name)}</h3><div>${e(f.meaning)}</div>`+
  (cs.length?`<div class=h>Likely causes</div><ul>${cs.map(c=>`<li>${e(c)}</li>`).join("")}</ul>`:"")+
@@ -3172,8 +3278,8 @@ function faultHTML(f){const ann=f.causes.filter(c=>/^Annotation/i.test(c)),cs=f.
 function segHTML(s){return `<h3>${e(s.device)}</h3><div>${e(s.desc)}</div><table>
 <tr><td>Location</td><td>${e(s.location)}</td></tr><tr><td>Terminals</td><td class=k>${e(s.t_in)} → ${e(s.t_out)}</td></tr>
 <tr><td>Monitored by</td><td>${e(s.monitor)}</td></tr><tr><td>Error</td><td>${s.err_move!=null?"E "+pad(s.err_move)+" (moving)":"—"}${s.err_stop!=null?", E "+pad(s.err_stop)+" (stopped)":""}</td></tr></table>`+
- (s.inferred?`<div class=cv>⚠ Inferred: ${e(s.inferred)}</div>`:"")+`<div class=ref>📄 ${e(s.ref)}</div>`}
-function chainHTML(){return `<h3>HLB safety chain – ${TN()}</h3><ol>${CM().map(s=>`<li><span class=k>${e(s.device)}</span> – ${e(s.desc)} <span class=ref>[${e(s.location)}] ${e(s.t_in)}→${e(s.t_out)} · ${e(s.monitor)}</span></li>`).join("")}</ol>
+ (s.inferred?`<div class=cv>⚠ Inferred: ${e(s.inferred)}</div>`:"")+(s.confirmed?`<div class=ok>✔ ${e(s.confirmed)}</div>`:"")+`<div class=ref>📄 ${e(s.ref)}</div>`}
+function chainHTML(){return `<h3>HLB safety chain – ${TN()}</h3><ol>${CM().map(s=>`<li><span class=k>${e(s.device)}</span> – ${e(s.desc)} <span class=ref>[${e(s.location)}] ${e(s.t_in)}→${e(s.t_out)} · ${e(s.monitor)}</span>${s.confirmed?' <span class=ok>✔ confirmed on site</span>':''}</li>`).join("")}</ol>
 <div class=h>Monitor / meter points</div><table>${D.monitor_points.map(m=>`<tr><td class=k>${e(m.point)}</td><td>${e(m.input)}</td><td>after ${e(m.after)}</td></tr>`).join("")}</table>
 <div class=h>Programmer</div>ENTER from CpuCab screen → 'sic:' shows J3 bits: F5 | AME…STLM | PM…STP | CM/FT | SAC | SCA | PC/FT | / (0 = open).
 ${D.chain_caveats.map(c=>`<div class=cv>⚠ ${e(c)}</div>`).join("")}<div class=ref>📄 ${TYPE=='sliding'?'Sheet 7D (PDF p13), 32D (PDF p68)':'Sheet 7B (PDF p11), 32A (PDF p65)'}; manual p15, p18</div>`}
@@ -3239,8 +3345,9 @@ function ioFind(q){const n=q.replace(/\s+/g,"").toLowerCase();return D.io.filter
 function answer(raw){let q=raw.toLowerCase().trim().replace(/[’']/g,"'");
  if(q=="__m_stop"){M=null;return ["Meter-out guide stopped.",[["Show safety chain","safety chain"]]]}
  if(q=="__m_ok"||q=="__m_bad"){if(!M)return answer("meter it out");if(q=="__m_ok")M.lo=M.mid;else M.hi=M.mid;return meterStep()}
- if(/meter|halv|track down|find (the )?open|which switch is open|trace/.test(q))return meterStart();
- if(/^(help|hi|hello|\?)$/.test(q))return [HELP,STARTCH];
+ if(/meter|halv|track down|find (the )?open|which switch is open|trace/.test(q)){safety(()=>meterW());return ["Opened the meter-out guide (one step per screen).",[["Open it again","meter it out"]]]}
+ if(/^(help|hi|hello|\?|start|menu)$/.test(q)){startScreen();return ["Pick a problem above.",[]]}
+ if(/safety chain (open|broken)|chain open|chain broken/.test(q)){FLOWS.chain();return ["Opened the safety chain guide.",[["Open it again","safety chain open"]]]}
  if(/reset/.test(q)&&!/\b(e|err|error|code)\s*\d/.test(q))return [RESET,[["Show safety chain","safety chain"]]];
  // between terminals
  let m=q.match(/between (?:terminal |term |t)?([\d\/]+|9fs) (?:and|&|-|to) (?:terminal |term |t)?([\d\/]+|9fs)/);
@@ -3309,12 +3416,48 @@ const STARTCH=[["Lift won't move","lift won't move"],["Safety chain open","safet
 function ask(q,label){if(q.startsWith("__browse_")){openMenu(q.slice(9));return}
  bub(e(label||q),true);const [h,c]=answer(q);bub(h);chips(c)}
 $("#f").onsubmit=ev=>{ev.preventDefault();const v=$("#q").value.trim();if(!v)return;$("#q").value="";ask(v)};
-$("#clr").onclick=()=>{log.innerHTML="";M=null;bub(HELP);chips(STARTCH)};
+$("#clr").onclick=()=>{log.innerHTML="";M=null;startScreen()};
 // ---------- browse ----------
 const T=[["faults","Faults"],["chain_model","Safety chain"],["io","I/O"],["params","Params"],["diagnostics","Diag"],["pages","Pages"],["tips","Tips"]];
 const BR={faults:f=>`<details><summary><b>E ${pad(f.code)}</b> ${e(f.name)}</summary>${faultHTML(f)}</details>`,chain_model:segHTML,io:ioHTML,params:parHTML,diagnostics:x=>`<span class=k>${e(x.screen)}</span> ${e(x.desc)}`,pages:x=>`<span class=k>PDF p${x.pdf_page}</span> ${x.sheet?"· sheet "+e(x.sheet):""}<div>${e(x.title)}</div>`,tips:x=>e(x)};
 function openMenu(k){k=k||"faults";$("#menu").classList.add("on");$("#mnav").innerHTML=T.map(([a,l])=>`<button class=ib data-k=${a} style="${a==k?"background:var(--acc);color:#fff":""}">${l}</button>`).join("");$("#mout").innerHTML=D[k].map(x=>`<div class=c>${BR[k](x)}</div>`).join("")}
 $("#mnav").onclick=ev=>{if(ev.target.dataset.k)openMenu(ev.target.dataset.k)};$("#mbtn").onclick=()=>openMenu();$("#mclose").onclick=()=>$("#menu").classList.remove("on");
 $('#lt').value=TYPE;$('#lt').onchange=ev=>{TYPE=localStorage.liftType=ev.target.value;M=null;bub(`Lift type set to <b>${TN()}</b>. Safety chain, meter-out and answers now follow ${TYPE=='sliding'?'sheets 7D/32D':'sheets 7B/32A'}.`);chips([["Show safety chain","safety chain"]])};
-bub(HELP);chips(STARTCH);
+// ===== simple UX layer =====
+const G=D.glossary;
+function gl(t){let s=e(t),seen={};return s.replace(/\b(VF5\+|9FS|RS485|STLM|SAF|STF|SPU|SLM|AME|SPM|SBO|STP|SEC|SAR|SAC|SCA|PC1|PC|FT1|FT|F5|IS[1-7]|MGD|APA|APB|PTC|IA|ID)\b/g,m=>{if(seen[m]||!G[m])return m;seen[m]=1;return `${m} <span class=gl>(${G[m]})</span>`})}
+const faultDetail=faultHTML;const SLN={10:["On sliding-door lifts the SAC contact is bridged (3→5), so E10 shouldn't come from SAC. IS5 just follows IS3.","Treat it like a car safety fault: check the car-top stop, inspection switch, hatch and limits (handset sic: position 3)."]};
+faultHTML=function(f){const sl=TYPE=='sliding'&&SLN[f.code];return sl?`<div class=big>E ${pad(f.code)} – ${gl(sl[0])}</div><div class=ok>✔ Confirmed on site: SAC bridged on sliding</div><div class=next><b>Do this next:</b> ${gl(sl[1])}</div><details><summary>More detail</summary>${faultDetail(f)}</details>`:`<div class=big>${f.code==0?"":"E "+pad(f.code)+" – "}${gl(f.plain)}</div><div class=next><b>Do this next:</b> ${gl(f.next)}</div><details><summary>More detail</summary>${faultDetail(f)}</details>`};
+const SIC=TYPE=>({1:["F5 safety fuse (2A)",0,1],2:["Pit / shaft switches",1,2],3:[TYPE=="sliding"?"Car safeties (car-top stop, inspection, hatch, limits, safety gear)":"Car safeties (car-top stop, inspection, hatch, car stop, limits, safety gear)",2,TYPE=="sliding"?5:6],4:[TYPE=='sliding'?"Car door operator OK contact (VF5+)":"Light curtain relay",null,null],5:TYPE=="sliding"?["Landing doors closed (SAC) – bridged on sliding, so this follows position 3",5,6]:["Landing doors closed (SAC)",6,7],6:TYPE=="sliding"?["Landing door locks (SCA)",5,6]:["Landing door locks (SCA)",7,8],7:[TYPE=='sliding'?"Car door contacts (PC/PC1)":"Light curtain (FT)",TYPE=="sliding"?6:8,99],8:["Not used",null,null]});
+const LOC="the <b>MC terminal strip</b> in the car-top control box (the ED1 box on the car roof)";
+const W=$("#wz");let WH=[];
+function wz(st,push=true){if(push&&W.classList.contains("on"))WH.push(curW);curW=st;W.classList.add("on");
+ $("#wzb").innerHTML=(st.warn?`<div class=warn>⚠ ${st.warn}</div>`:"")+`<h2>${st.t}</h2><div class=wbody>${st.b||""}</div>`+(st.more?`<details><summary>More detail</summary>${st.more}</details>`:"");
+ const bb=$("#wzbtn");bb.innerHTML="";(st.btns||[]).forEach(([l,fn,cls])=>{const b=document.createElement("button");b.className="wb "+(cls||"");b.innerHTML=l;b.onclick=fn;bb.appendChild(b)});$("#wzb").scrollTop=0}
+let curW=null;$("#wzback").onclick=()=>{if(WH.length)wz(WH.pop(),false);else W.classList.remove("on")};$("#wzx").onclick=()=>{W.classList.remove("on");WH=[]};
+const close=()=>{W.classList.remove("on");WH=[]};
+function safety(next){wz({t:"Safety first",warn:"You are about to take LIVE voltage readings.",b:`<ul class=steps><li>The safety chain runs at <b>24V DC</b> – but <b>230V AC</b> is in the controller and drive. Don't touch anything else.</li><li>On the car top: switch to <b>INSPECTION</b> and press the <b>car-top STOP</b> first.</li><li>Never enter the pit without the <b>pit stop switch</b> on.</li><li>Follow your site's isolate / lock-out rules. If you're unsure – <b>stop and call a senior tech</b>.</li></ul>`,btns:[["I understand – continue",next,"yes"],["Cancel",close,"no"]]})}
+function meterW(lo,hi){const P=PT();lo=lo??-1;hi=hi??P.length-1;
+ if(hi-lo<=1){const lost=P[hi],prev=lo<0?"the fuse output (J12,3)":"terminal "+P[lo].t;const segs=CM().filter(s=>!/branch/.test(s.monitor)&&lost.after.split(/,\s*|\s+/).some(w=>s.device.split(/[ \/]/).includes(w)));
+  return wz({t:"✅ Found the open section",b:`<div class=big>24V at ${e(prev)}, but 0V at terminal ${e(lost.t)}.</div><div class=next><b>Check these switches:</b><ul>${(segs.length?segs:[{device:lost.after,location:""}]).map(s=>`<li>${gl(s.device)} ${s.location?`– <i>${e(s.location)}</i>`:""}</li>`).join("")}</ul>One of them is open. Once fixed, reset the lift.</div>`,more:`<div class=cv>⚠ Meter points & order read from ${TYPE=='sliding'?'sheet 7D/32D':'sheet 7B/32A'}; physical locations partly inferred.</div>`,btns:[["Reset steps",()=>{close();ask("reset steps","Reset steps")},"yes"],["Done",close,"no"]]})}
+ const mid=Math.floor((lo+hi+1)/2),p=P[mid];
+ wz({t:`Measure terminal ${e(p.t)}`,b:`<div class=probe><div>🔴 <b>Red probe</b> → terminal <b class=k>${e(p.t)}</b></div><div>⚫ <b>Black probe</b> → terminal <b class=k>1000</b> (GND / 0V)</div><div>Meter on <b>DC volts</b>.</div></div><div class=m>Both are on ${LOC}.</div><div class=m>This point comes after: ${gl(p.after)}</div>`,more:`<div class=cv>⚠ Inferred: the manual has no metering procedure. Terminal positions from ${TYPE=='sliding'?'sheet 7D':'sheet 7B'} (MC = car-top controller plug).</div>`,
+ btns:[["About 24V",()=>meterW(mid,hi),"yes"],["0V",()=>meterW(lo,mid),"no"],["Not sure",()=>wz({t:"Not sure?",b:"Check the meter is on DC volts and the black probe is on 1000. Try the probe on terminal 1 – it should read about 24V. If terminal 1 is 0V, the 2A fuse F5 is blown.",btns:[["Try again",()=>wz(curW&&WH.length?WH.pop():curW,false)]]}),""]]})}
+function codePicker(){let g="";for(let i=1;i<=31;i++)g+=`<button class=num onclick="showCode(${i})">${pad(i)}</button>`;wz({t:"Which error code?",b:`<div class=m>On the handset: ESC → scroll to <b>E</b> → ENTER. "E 00 4 -P2-N2" means last error = code <b>4</b>, at floor 2, happened 2 times.</div><div class=grid>${g}</div>`,btns:[]})}
+function showCode(c){const f=FX(c);const chain=CM().some(s=>s.err_move==c||s.err_stop==c);wz({t:`Error ${pad(c)}`,b:faultHTML(f),btns:[...(chain?[["Find it with the meter",()=>safety(()=>meterW()),"yes"]]:[]),["Reset steps",()=>{close();ask("reset steps","Reset steps")}],["Done",close,"no"]]})}
+function sicStep(){wz({t:"Check the safety chain on the handset",b:`<ol class=steps><li>Plug the handset into the <b>PNET</b> socket on the ED1 card (car-top box).</li><li>When it shows <b>CpuCab…</b>, press <b>ENTER</b> until you see <b>sic:</b></li></ol><div class=big>Are all 8 numbers <b>1</b>?</div>`,btns:[["Yes – all 1",()=>wz({t:"Safety chain is OK",b:`<div class=big>The safety chain isn't the problem.</div><div class=next><b>Do this next:</b> check for an error code in the E menu, and that the car-top inspection switch is on NORMAL.</div>`,btns:[["Enter error code",codePicker,"yes"],["Done",close,"no"]]}),"yes"],["No – there's a 0",firstZero,"no"]]})}
+function firstZero(){const S=SIC(TYPE);wz({t:"Which is the FIRST 0 (from the left)?",b:`<div class=grid8>${[1,2,3,4,5,6,7,8].map(i=>`<button class=num onclick="sicRes(${i})">${i}</button>`).join("")}</div><div class=m>e.g. sic: 1 1 <b>0</b> 0 0 0 0 0 → tap <b>3</b></div>`,btns:[]})}
+function sicRes(i){const [name,lo,hi]=SIC(TYPE)[i];const segs=CM().filter(s=>s.monitor.startsWith("IS"+(i)+" ")||(i==1&&s.id=="F5"));
+ wz({t:`Position ${i}: ${e(name)}`,b:`<div class=big>The chain is open at: <b>${e(name)}</b>.</div><div class=next><b>Do this next:</b> ${i==1?"Check fuse F5 (2A) on the ED1 card – find the short before replacing.":i==8?"Position 8 isn't used – look at an earlier 0.":`check these:`}${segs.length&&i>1?`<ul>${segs.map(s=>`<li>${gl(s.device)} – <i>${e(s.location)}</i></li>`).join("")}</ul>`:""}</div>`,more:`<div class=cv>⚠ sic: bit order from manual p18; J3 pin mapping read from ${TYPE=='sliding'?'sheet 7D':'sheet 7B'}.</div>`,
+ btns:[...(lo!=null&&i>1?[["Find it with the meter",()=>{const P=PT();const L=Math.min(lo,P.length-2)-1,H=Math.min(hi,P.length-1);safety(()=>meterW(Math.max(-1,L),H))},"yes"]]:[]),["Done",close,"no"]]})}
+function errQ(next){return ()=>wz({t:"Is there an error code?",b:`<div class=m>Handset: ESC → scroll to <b>E</b> → ENTER to read the last error.</div>`,btns:[["Yes",codePicker,"yes"],["No",next,"no"]]})}
+const FLOWS={
+ move:()=>errQ(sicStep)(),
+ chain:()=>sicStep(),
+ code:()=>codePicker(),
+ open:()=>wz({t:"Is the car level at a floor?",b:`<div class=m>Doors only open when the car is at a floor.</div>`,btns:[["Yes",errQ(()=>wz({t:"Is the controller asking the doors to open?",b:`<ol class=steps><li>Handset: press ENTER until <b>out1:</b></li><li>Get someone to press the car <b>door open</b> or a call button.</li></ol><div class=big>Does <b>APA</b> (open door A) change to 1?</div>`,btns:[["Yes",()=>wz({t:"Controller is sending OPEN",b:`<div class=big>The controller is doing its job – the problem is the door operator or its wiring.</div><div class=next><b>Do this next:</b> check power and the open signal at the door operator.</div>`,more:"📄 Sheets 8D (PDF p17), 21E–21H (PDF p39–42).<div class=cv>⚠ Inferred guidance.</div>",btns:[["Done",close]]}),"yes"],["No",()=>wz({t:"Controller is NOT sending OPEN",b:`<div class=big>The controller isn't asking the doors to open.</div><div class=next><b>Do this next:</b> check the door settings for this floor (F09–F18) and that there is no error code.</div>`,more:"F09–F18: 0 no door, 1 side A, 2 side B, 3 both, 4 selective (manual p11).<div class=cv>⚠ Inferred guidance.</div>",btns:[["Done",close]]}),"no"]]})),"yes"],["No",()=>wz({t:"Car not level",b:`<div class=big>Fix the levelling first.</div><div class=next><b>Do this next:</b> check the levelling sensors (IA/ID) and the magnets at this floor.</div>`,more:"📄 Sheets 25A/25B (PDF p57–58); handset 'imp:' shows sensors.",btns:[["Done",close]]}),"no"]]}),
+ close:()=>wz({t:"Is anything in the doorway?",b:`<div class=m>Something blocking the light curtain will keep the doors open.</div>`,btns:[["Yes",()=>wz({t:"Clear the doorway",b:`<div class=big>Remove the obstruction and clean the light-curtain strips.</div>`,btns:[["Done",close]]}),"yes"],["No",errQ(()=>wz({t:"Is the controller asking the doors to close?",b:`<ol class=steps><li>Handset: press ENTER until <b>out0:</b></li></ol><div class=big>Does <b>Close car doors</b> change to 1?</div>`,btns:[["Yes",()=>wz({t:"Controller is sending CLOSE",b:`<div class=big>The door operator or the car door contact is the problem.</div><div class=next><b>Do this next:</b> check the door closes fully and the car door contact ${gl("PC")} makes (handset sic: position 7).</div>`,more:"<div class=cv>⚠ Inferred guidance.</div>",btns:[["Done",close]]}),"yes"],["No",()=>wz({t:"Controller is NOT sending CLOSE",b:`<div class=big>The controller is holding the doors open.</div><div class=next><b>Do this next:</b> check F06 (1 = doors stay open at floor) and T02 (door open time).</div>`,more:"📄 Manual p11–12.<div class=cv>⚠ Inferred guidance.</div>",btns:[["Done",close]]}),"no"]]})),"no"]]})};
+function startScreen(){bub(`<div class=big>What's the problem?</div><div class=start>${[["🛑","Lift won't move","move"],["🚪","Doors won't open","open"],["🚪","Doors won't close","close"],["🔢","Error code on display","code"],["⛓️","Safety chain open","chain"]].map(([i,l,k])=>`<button class=sb onclick="FLOWS.${k}()"><span>${i}</span>${l}</button>`).join("")}</div><div class=m>Or type the problem below.</div>`)}
+
+startScreen();
 </script></body></html>
