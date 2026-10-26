@@ -1,0 +1,2649 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e1013"><title>ED1 HLB Fault Bot</title><style>
+:root{--bg:#f2f3f5;--fg:#111;--card:#fff;--mut:#667;--acc:#0a6cff;--bd:#dde;--me:#0a6cff;--warn:#b26a00;--note:#7a3fbf}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1013;--fg:#eee;--card:#1b1e24;--mut:#9aa3ad;--acc:#4da3ff;--bd:#2c3038;--me:#1f5fd1;--warn:#e0a040;--note:#b58cf0}}
+*{box-sizing:border-box}html,body{height:100%}body{margin:0;font:16px/1.45 system-ui,sans-serif;background:var(--bg);color:var(--fg);display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--bd)}header h1{font-size:17px;margin:0;flex:1}
+.ib{min-width:44px;min-height:44px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);font-size:15px;padding:0 10px}
+#log{flex:1;overflow-y:auto;padding:12px}.b{max-width:92%;padding:10px 12px;border-radius:14px;margin:6px 0;background:var(--card);border:1px solid var(--bd)}
+.me{margin-left:auto;background:var(--me);color:#fff;border:0}.b h3{margin:0 0 4px;font-size:16px}.b ol,.b ul{padding-left:20px;margin:4px 0}.b li{margin:3px 0}
+.h{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin:8px 0 2px}.ref{font-size:12px;color:var(--mut);margin-top:6px}
+.cv{font-size:13px;color:var(--warn);margin-top:4px}.hn{font-size:13px;color:var(--note)}.k{font-family:ui-monospace,monospace;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}.chips button{min-height:40px;padding:0 12px;border-radius:20px;border:1px solid var(--acc);background:transparent;color:var(--acc);font-size:14px}
+form{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--bd);background:var(--bg)}
+#q{flex:1;font-size:17px;padding:12px;border-radius:22px;border:1px solid var(--bd);background:var(--card);color:var(--fg)}#send{min-width:56px;border-radius:22px;border:0;background:var(--acc);color:#fff;font-size:16px}
+table{border-collapse:collapse;width:100%;font-size:14px}td{border-bottom:1px solid var(--bd);padding:4px}
+#menu{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;z-index:9}#menu.on{display:flex}#mnav{display:flex;gap:6px;overflow-x:auto;padding:8px 12px}
+#mout{flex:1;overflow-y:auto;padding:0 12px 30px}.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px;margin:8px 0}
+</style></head><body>
+<header><h1>⚡ ED1 HLB Fault Bot</h1><button class=ib id=mbtn>☰ Browse</button><button class=ib id=clr title="Clear">↺</button></header>
+<div id=log></div>
+<form id=f><input id=q placeholder="Describe the fault… e.g. E 05, won't move" autocomplete=off enterkeyhint=send><button id=send>Send</button></form>
+<div id=menu><header><h1>Browse</h1><button class=ib id=mclose>✕ Chat</button></header><div id=mnav></div><div id=mout></div></div>
+<script>
+const D={
+ "source": [
+  "Schematic E-SCH-00000015 Rev08 (70 pp)",
+  "ED1 manual E-DOC-00000035 Rev01.4 (20 pp)"
+ ],
+ "faults": [
+  {
+   "code": 0,
+   "name": "ERR_OK",
+   "meaning": "No errors.",
+   "causes": [],
+   "checks": [],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 1,
+   "name": "ERR_MOVE_TIMEOUT",
+   "meaning": "Maximum time of movement exceeded.",
+   "causes": [
+    "Travel exceeded timer T08 (default 95 s)"
+   ],
+   "checks": [
+    "Check T08 'Maximum time of the travel of the lift' (manual p12).",
+    "Check car actually moving / drive status; check magnetic sensors via 'imp:' (manual p17).",
+    "Check magnet/sensor placement (schematic sheet 25A/25B, PDF p57-58)."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 2,
+   "name": "ERR_S1_UNSAFE",
+   "meaning": "Error input S1 - RST 00 1 needed.",
+   "causes": [
+    "J2 IN01 = S1, safety control of the stuck (sticked) contactor (schematic legend sheet 28)",
+    "Annotation in manual copy: 'Pg 9/5 Circ Diag, J2 IN01, safety chain through contactors Pg3/6'"
+   ],
+   "checks": [
+    "Check J2 bit 'Contactor control' in 'j2:' diagnostic (manual p17).",
+    "Check S1 contactor monitoring loop \u2013 schematic sheet 9 (PDF p18) and sheet 3 converter/main power (PDF p5).",
+    "Check main contactor M / contactors for welded contacts (sheet 3).",
+    "Reset: RST 00>1 per manual."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 3,
+   "name": "ERR_S2_UNSAFE",
+   "meaning": "Error input S2 - RST 00 1 needed.",
+   "causes": [
+    "J2 IN02 = S2 (schematic sheet 9)",
+    "Annotation: 'input monitoring F5 start of safety chain'"
+   ],
+   "checks": [
+    "Check F5 2A safety circuit fuse.",
+    "Check J2 IN02 wiring on schematic sheet 9 (PDF p18).",
+    "Reset: RST 00>1."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 4,
+   "name": "ERR_T1_DOOR_OPEN",
+   "meaning": "On power-on: a) landing doors open with car not at floor; b) landing doors open with car at floor but automatic closing failed.",
+   "causes": [],
+   "checks": [
+    "Check landing doors closed/locked (SAC/SCA) at all floors.",
+    "Check 'sic:' bits SAC and SCA (manual p18).",
+    "For Magnetic Door landing doors check MGD card & bus (schematic sheet 23, PDF p55)."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 5,
+   "name": "ERR_T1_DOOR_TIMEOUT",
+   "meaning": "On power-on the system failed communication on BUS RS485 with a Magnetic Door card while trying to auto-close landing doors.",
+   "causes": [],
+   "checks": [
+    "Check RS485 bus A/B, +24, GND to each MGD card (schematic sheet 10, PDF p19).",
+    "Check MGD dip-switch 1 = ON and floor address dip 2-5 (manual p7).",
+    "Check F6 3.15A bus power fuse (legend sheet 28)."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 6,
+   "name": "ERR_DOOR_TIMEOUT",
+   "meaning": "Normal operation: a) max movement time of automatic landing door (Magnetic Door) exceeded; b) failed BUS RS485 communication with a Magnetic Door card.",
+   "causes": [],
+   "checks": [
+    "Check T13 max landing-door movement time (default 30 s).",
+    "Check door for obstruction / M menu current settings (manual p14).",
+    "Check bus as for code 5."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 7,
+   "name": "ERR_NOT_SAFE_M_1",
+   "meaning": "Safety circuit error during movement. Input IS1: fuse F5 2A burned - RST 00 1 needed.",
+   "causes": [
+    "F5 2A safety circuit fuse blown"
+   ],
+   "checks": [
+    "Connect programmer, press ENTER from CpuCab screen to 'sic:' and find which J3 bit is 0 (manual p18).",
+    "Check/replace F5 2A; find the short before replacing (safety circuit sheets 7B-7D, PDF p11-13).",
+    "Fix the cause, then reset with RST 00>1 (programmer) or flick maintenance switch NORMAL\u2192INSPECTION\u2192NORMAL (manual p10; schematic sheet 32A)."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 8,
+   "name": "ERR_NOT_SAFE_M_2",
+   "meaning": "Safety circuit error during movement. Input IS2: AME, SEC (only HLT), QAP, SAF, SLM, SPU, STF, STLM - RST 00 1 needed.",
+   "causes": [
+    "AME key switch emergency",
+    "SAF pit entry",
+    "STF pit stop",
+    "SPU pit prop",
+    "SLM governor switch",
+    "STLM governor rope tension"
+   ],
+   "checks": [
+    "Connect programmer, press ENTER from CpuCab screen to 'sic:' and find which J3 bit is 0 (manual p18).",
+    "Walk series 1 \u2192 1/1 \u2192 2: AME, SAF, STF, SPU, SLM, STLM (sheet 32A, PDF p65).",
+    "Shaft devices wiring: sheet 24 (PDF p56).",
+    "Fix the cause, then reset with RST 00>1 (programmer) or flick maintenance switch NORMAL\u2192INSPECTION\u2192NORMAL (manual p10; schematic sheet 32A)."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 9,
+   "name": "ERR_NOT_SAFE_M_3",
+   "meaning": "Safety circuit error during movement. Input IS3: PM, SAR, SBO, SEC (not on HLT), SPM, STP.",
+   "causes": [
+    "SPM stop on maintenance box",
+    "PM maintenance switch",
+    "SBO car hatch",
+    "STP car stop",
+    "SEC overtravel",
+    "SAR safety gear"
+   ],
+   "checks": [
+    "Connect programmer, press ENTER from CpuCab screen to 'sic:' and find which J3 bit is 0 (manual p18).",
+    "Walk series 2 \u2192 2/1 \u2192 2/2 \u2192 2/3 \u2192 3 (sheet 32A).",
+    "Car top terminals: sheet 6B/6C (PDF p9-10)."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 10,
+   "name": "ERR_NOT_SAFE_M_4",
+   "meaning": "Safety circuit error during movement. Input IS5: SAC (door closed contact).",
+   "causes": [
+    "Landing door closed contact SAC open"
+   ],
+   "checks": [
+    "Connect programmer, press ENTER from CpuCab screen to 'sic:' and find which J3 bit is 0 (manual p18).",
+    "Check SAC on each landing door between terminals 3\u21925 (sheet 32A).",
+    "Landing door lock wiring sheets 20A-20E (PDF p31-36)."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 11,
+   "name": "ERR_NOT_SAFE_M_5",
+   "meaning": "Safety circuit error during movement. Input IS6: SCA (door locked contact).",
+   "causes": [
+    "Landing door lock contact SCA open"
+   ],
+   "checks": [
+    "Connect programmer, press ENTER from CpuCab screen to 'sic:' and find which J3 bit is 0 (manual p18).",
+    "Check SCA on each landing door between terminals 5\u21926 (sheet 32A).",
+    "Lock connections sheets 20A-20E; lock release delay T16."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 12,
+   "name": "ERR_NOT_SAFE_M_6",
+   "meaning": "Safety circuit error during movement. Input IS7: PC, PC1, PC2, FT, FT1.",
+   "causes": [
+    "Car door contact PC/PC1",
+    "Photocell/light curtain FT/FT1"
+   ],
+   "checks": [
+    "Connect programmer, press ENTER from CpuCab screen to 'sic:' and find which J3 bit is 0 (manual p18).",
+    "Check terminals 6 \u2192 6/1 \u2192 9 (sheet 32A\u201332D).",
+    "Car door / light curtain sheets 21C-21O (PDF p37-49)."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 13,
+   "name": "ERR_NOT_SAFE_S_1",
+   "meaning": "Safety circuit error when lift stopped. Input IS1: fuse F5 2A burned - RST 00 1 needed.",
+   "causes": [
+    "F5 2A blown"
+   ],
+   "checks": [
+    "Connect programmer, press ENTER from CpuCab screen to 'sic:' and find which J3 bit is 0 (manual p18).",
+    "Check/replace F5 2A, locate short first.",
+    "Fix the cause, then reset with RST 00>1 (programmer) or flick maintenance switch NORMAL\u2192INSPECTION\u2192NORMAL (manual p10; schematic sheet 32A)."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 14,
+   "name": "ERR_NOT_SAFE_S_2",
+   "meaning": "Safety circuit error when lift stopped. Input IS2: AME, SEC (only HLT), QAP, SAF, SLM, SPU, STF, STLM - RST 00 1 needed.",
+   "causes": [
+    "Annotation: 'Shaft Safety inc pit access sw'"
+   ],
+   "checks": [
+    "Connect programmer, press ENTER from CpuCab screen to 'sic:' and find which J3 bit is 0 (manual p18).",
+    "Walk AME, SAF, STF, SPU, SLM, STLM (sheet 32A).",
+    "After pit access, reset per sheet 32A: RST 00>1; or short MAN\u201324B for 1 s; or maintenance switch NORMAL\u2192INSPECTION\u2192NORMAL; or press a floor/car button 6 times within 6\u201310 s."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 15,
+   "name": "ERR_NOT_SAFE_S_3",
+   "meaning": "Safety circuit error when lift stopped. Input IS3: PM, SAR, SBO, SEC (not on HLT), SPM, STP.",
+   "causes": [
+    "Annotation: 'Car safeties inc COP Stop'"
+   ],
+   "checks": [
+    "Connect programmer, press ENTER from CpuCab screen to 'sic:' and find which J3 bit is 0 (manual p18).",
+    "Check car stop STP, hatch SBO, maintenance stop SPM/PM, SEC, SAR (sheet 32A)."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 16,
+   "name": "ERR_AB_ALIGN",
+   "meaning": "Levelling error with the car at the floor.",
+   "causes": [],
+   "checks": [
+    "Check IA/ID sensors via 'imp:' (manual p17).",
+    "Check magnet placement & stopping space (sheet 25A/25B, PDF p57-58)."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 17,
+   "name": "ERR_AB_STOPPING",
+   "meaning": "Levelling error during arrival of the car at the floor.",
+   "causes": [],
+   "checks": [
+    "Check IA/ID, ZX, magnets (sheet 25A/B).",
+    "Check T10/T11 sliding times."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 18,
+   "name": "ERR_AB_DOOR_OPENING",
+   "meaning": "Levelling error during door opening.",
+   "causes": [],
+   "checks": [
+    "Check IA/ID sensors and magnets (sheet 25A/B)."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 19,
+   "name": "ERR_AB_DOOR_OPEN",
+   "meaning": "Levelling error with the door opened.",
+   "causes": [],
+   "checks": [
+    "Check IA/ID sensors and magnets (sheet 25A/B)."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 20,
+   "name": "ERR_AB_DOOR_CLOSING",
+   "meaning": "Levelling error during the door closing.",
+   "causes": [],
+   "checks": [
+    "Check IA/ID sensors and magnets (sheet 25A/B)."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 21,
+   "name": "ERR_BUS",
+   "meaning": "BUS RS485 signal reading errors, disturbances on BUS RS485.",
+   "causes": [],
+   "checks": [
+    "Check A/B wiring, GND, +24 of bus devices (sheet 10, PDF p19).",
+    "Car display DL1 fast blinking = broken link or incorrect serial (manual p3).",
+    "Check F6 3.15A bus fuse."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 22,
+   "name": "ERR_DOOR_OPENING",
+   "meaning": "Maximum number of tries to open door.",
+   "causes": [],
+   "checks": [
+    "Check door operator / obstruction.",
+    "Check K6 APA / K7 APB relays & 'out1:' (manual p19)."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 23,
+   "name": "ERR_DOOR_CLOSING",
+   "meaning": "Maximum number of tries to close door.",
+   "causes": [],
+   "checks": [
+    "Check obstruction, photocell/light curtain FT/FT1.",
+    "Check K5 CP close relay, F29 (4th close attempt)."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 24,
+   "name": "ERR_MAXLAPS",
+   "meaning": "Exceeded the maximum number of trips.",
+   "causes": [],
+   "checks": [
+    "No further detail in manual. View trips in STS 01."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 25,
+   "name": "ERR_CAR_DOOR_TIMEOUT",
+   "meaning": "Maximum time for closing of the car door exceeded.",
+   "causes": [],
+   "checks": [
+    "Check car door operator and PC/PC1 contacts (sheets 21E-21O)."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 26,
+   "name": "ERR_CATENACCI",
+   "meaning": "During closing of doors after arrival, the max 12 s for closing car doors and/or locks was exceeded.",
+   "causes": [],
+   "checks": [
+    "Check car door close and locks (SCA, LKE/LKM).",
+    "Check T03 delay door contact\u2192lock."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 27,
+   "name": "ERR_CONFIGURATION",
+   "meaning": "Configuration system error.",
+   "causes": [],
+   "checks": [
+    "Review F menu (e.g. F08 floors, F00-F02 display, F09-F18 doors); MEM 00>1 then RST 03>1."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 28,
+   "name": "ERR_ENGINE_FAULT",
+   "meaning": "Error for inverter alarm - RST 02 1 is needed.",
+   "causes": [
+    "J2 IN04 inverter on safety protection (legend)"
+   ],
+   "checks": [
+    "Read inverter display: PrA = safety series open (0V on 9FS); 0.0 = closed (+24 Vdc on 9FS) (sheet 32A).",
+    "Reset Toshiba drive: press STOP twice or power off >10 s (sheet 32A).",
+    "Note: manual says RST 02 is for HLG gearless inverter."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 29,
+   "name": "ERR_PTC",
+   "meaning": "Motor over-temperature detected by PTC - RST 00 1 and switch main power OFF/ON needed.",
+   "causes": [],
+   "checks": [
+    "Allow motor to cool, check PTC (J1 PTC on sheet 9).",
+    "Threshold F23 (default 512).",
+    "RST 00>1 then power cycle main power."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 30,
+   "name": "ERR-LEVELLING_TIMEOUT",
+   "meaning": "System has not levelled within 10 seconds.",
+   "causes": [],
+   "checks": [
+    "Check IA/ID and magnets; T09 levelling delay."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  },
+  {
+   "code": 31,
+   "name": "ERR_LOW_BATTERY",
+   "meaning": "Emergency battery voltage lower than 20 V.",
+   "causes": [],
+   "checks": [
+    "Check batteries (2\u00d7 12V 1.3Ah BAT7/BAT8 in car roof panel, sheet 7B) and battery pack (sheet 2, PDF p4).",
+    "Check F1 6.3A battery supply fuse."
+   ],
+   "ref": "ED1 manual E-DOC-00000035 p15-16"
+  }
+ ],
+ "io": [
+  {
+   "terminal": "J3,1",
+   "name": "0V",
+   "function": "Safety line connector 0V",
+   "ref": "p59 (sheet 26)"
+  },
+  {
+   "terminal": "J3,2 / IS1",
+   "name": "F5 2A",
+   "function": "Safety circuit supply after F5 2A fuse (sic bit 1)",
+   "ref": "manual p18; sheet 26"
+  },
+  {
+   "terminal": "J3,3 / IS2",
+   "name": "AME, SAF, STF, SPU, SLM, STLM",
+   "function": "Shaft/pit safeties (series 1\u21922)",
+   "ref": "manual p15,18; sheet 32A"
+  },
+  {
+   "terminal": "J3,4 / IS3",
+   "name": "SPM, PM, SBO, STP, SEC, SAR",
+   "function": "Car safeties (series 2\u21923)",
+   "ref": "manual p15,18"
+  },
+  {
+   "terminal": "J3,5 / IS4",
+   "name": "CM/CM1/FT/FT1/VF5+",
+   "function": "Terminal 3 \u2013 mechanical door closing protection / car door (sic bit 4)",
+   "ref": "sheet 32A-B; manual p18"
+  },
+  {
+   "terminal": "J3,6 / IS5",
+   "name": "SAC",
+   "function": "Landing door closed contact (terminal 5)",
+   "ref": "manual p15; sheet 32A"
+  },
+  {
+   "terminal": "J3,7 / IS6",
+   "name": "SCA",
+   "function": "Landing door locked contact (terminal 6)",
+   "ref": "manual p15; sheet 32A"
+  },
+  {
+   "terminal": "J3,8 / IS7",
+   "name": "PC, PC1, PC2, FT, FT1 / FC",
+   "function": "Car door contacts / light curtain (terminal 9 / 9FS)",
+   "ref": "manual p15,18"
+  },
+  {
+   "terminal": "J3,9 / IS8",
+   "name": "\u2014",
+   "function": "Shown as '/' in sic display",
+   "ref": "manual p18"
+  },
+  {
+   "terminal": "J3,10",
+   "name": "+24",
+   "function": "+24 supply",
+   "ref": "sheet 26"
+  },
+  {
+   "terminal": "J2 IN01",
+   "name": "S1",
+   "function": "Safety control of stuck contactor",
+   "ref": "legend sheet 28; sheet 9"
+  },
+  {
+   "terminal": "J2 IN02",
+   "name": "S2",
+   "function": "Safety input S2 (error 3)",
+   "ref": "sheet 9; manual p15"
+  },
+  {
+   "terminal": "J2 IN03",
+   "name": "MAN",
+   "function": "Maintenance reset input (short MAN\u201324B 1 s to reset after pit access)",
+   "ref": "sheet 9; sheet 32A"
+  },
+  {
+   "terminal": "J2 IN04",
+   "name": "Inverter",
+   "function": "Inverter on safety protection",
+   "ref": "legend sheet 28"
+  },
+  {
+   "terminal": "J2 IN05",
+   "name": "Overload / PSC",
+   "function": "Overload; PSC weight limit sensor to J2,6 & J2,10",
+   "ref": "legend sheet 28-29; sheet 6B"
+  },
+  {
+   "terminal": "J2 bits",
+   "name": "Contactor control, Levelling module, Maintenance, Inverter alarm, Overload, IA, IB, ZX, RT",
+   "function": "Order shown in 'j2:' display",
+   "ref": "manual p17"
+  },
+  {
+   "terminal": "J1 bits",
+   "name": "P0..P3, Px, Py, Pz, Pw IN CAR",
+   "function": "Car call inputs shown in 'j1:'",
+   "ref": "manual p17"
+  },
+  {
+   "terminal": "J1 IN09",
+   "name": "PD",
+   "function": "Maintenance down push button (PMD)",
+   "ref": "sheet 9 (PDF p18)"
+  },
+  {
+   "terminal": "J1 IN12",
+   "name": "PS",
+   "function": "Maintenance up push button (PMS)",
+   "ref": "sheet 9 (PDF p18)"
+  },
+  {
+   "terminal": "J1 IN13-IN16, J2 IN07-08",
+   "name": "Floor calls 0-5",
+   "function": "Default landing call inputs (shift when LCD610 used)",
+   "ref": "manual p6"
+  },
+  {
+   "terminal": "J1 PTC",
+   "name": "PTC",
+   "function": "Motor temperature sensor",
+   "ref": "sheet 9"
+  },
+  {
+   "terminal": "OUT13",
+   "name": "Low speed",
+   "function": "Low speed command",
+   "ref": "legend sheet 29"
+  },
+  {
+   "terminal": "OUT14",
+   "name": "High speed",
+   "function": "High speed signal output",
+   "ref": "legend sheet 29"
+  },
+  {
+   "terminal": "OUT15",
+   "name": "Standby",
+   "function": "Standby signal output",
+   "ref": "legend sheet 29"
+  },
+  {
+   "terminal": "OUT16",
+   "name": "Lift busy",
+   "function": "Lift busy signal output",
+   "ref": "legend sheet 29"
+  },
+  {
+   "terminal": "OUT17",
+   "name": "Lift at floor",
+   "function": "Lift at floor signal output (J12)",
+   "ref": "legend sheet 29; sheet 9"
+  },
+  {
+   "terminal": "K1 KS",
+   "name": "Up relay",
+   "function": "Up direction relay",
+   "ref": "legend sheet 28"
+  },
+  {
+   "terminal": "K2 KD",
+   "name": "Down relay",
+   "function": "Down direction relay",
+   "ref": "legend sheet 28"
+  },
+  {
+   "terminal": "K5 CP",
+   "name": "Close door",
+   "function": "Closing door relay",
+   "ref": "legend sheet 27"
+  },
+  {
+   "terminal": "K6 APA",
+   "name": "Open A",
+   "function": "Door opening relay side A",
+   "ref": "legend sheet 27"
+  },
+  {
+   "terminal": "K7 APB",
+   "name": "Open B",
+   "function": "Door opening relay side B",
+   "ref": "legend sheet 27"
+  },
+  {
+   "terminal": "K8 BAT",
+   "name": "Battery",
+   "function": "Emergency activation without main power",
+   "ref": "legend sheet 27"
+  },
+  {
+   "terminal": "K9 BKD",
+   "name": "Error",
+   "function": "Error relay \u2013 system out of service",
+   "ref": "legend sheet 27"
+  },
+  {
+   "terminal": "K10 AX",
+   "name": "Ready",
+   "function": "System ready to move",
+   "ref": "legend sheet 27"
+  },
+  {
+   "terminal": "K12 LC",
+   "name": "Car light",
+   "function": "Car light relay (F4 1A)",
+   "ref": "legend sheet 28; sheet 9"
+  },
+  {
+   "terminal": "J7",
+   "name": "BUS RS485 car (GND, CHB, CHA)",
+   "function": "Car push button bus",
+   "ref": "sheet 9"
+  },
+  {
+   "terminal": "J8 / J11",
+   "name": "BUS RS485",
+   "function": "Bus to floor displays / MGD (BusA, BusB, GND, +24)",
+   "ref": "sheet 10, 26"
+  },
+  {
+   "terminal": "PNET",
+   "name": "Programmer",
+   "function": "ED1 display tool connector \u2013 DO NOT use network cable",
+   "ref": "legend sheet 29"
+  },
+  {
+   "terminal": "9FS",
+   "name": "Safety series end",
+   "function": "+24 Vdc when safety series closed (inverter shows 0.0), 0V when open (PrA)",
+   "ref": "sheet 32A"
+  },
+  {
+   "terminal": "F0",
+   "name": "2.5A fuse",
+   "function": "Primary transformer fuse",
+   "ref": "legend sheet 28 (PDF p61)"
+  },
+  {
+   "terminal": "F1",
+   "name": "6.3A fuse",
+   "function": "Circuit battery supply",
+   "ref": "legend sheet 28 (PDF p61)"
+  },
+  {
+   "terminal": "F2",
+   "name": "10A fuse",
+   "function": "24V AC power line of ED1",
+   "ref": "legend sheet 28 (PDF p61)"
+  },
+  {
+   "terminal": "F3",
+   "name": "10A fuse",
+   "function": "24V AC power line of ED1",
+   "ref": "legend sheet 28 (PDF p61)"
+  },
+  {
+   "terminal": "F4",
+   "name": "1A fuse",
+   "function": "Car light",
+   "ref": "legend sheet 28 (PDF p61)"
+  },
+  {
+   "terminal": "F5",
+   "name": "2A fuse",
+   "function": "Safety circuit",
+   "ref": "legend sheet 28 (PDF p61)"
+  },
+  {
+   "terminal": "F6",
+   "name": "3.15A fuse",
+   "function": "Bus power line",
+   "ref": "legend sheet 28 (PDF p61)"
+  },
+  {
+   "terminal": "F7",
+   "name": "8A fuse",
+   "function": "Power line 24DC accessories",
+   "ref": "legend sheet 28 (PDF p61)"
+  },
+  {
+   "terminal": "F8",
+   "name": "4A fuse",
+   "function": "Power line brake",
+   "ref": "legend sheet 28 (PDF p61)"
+  }
+ ],
+ "safety_chain": [
+  {
+   "terminal": "1",
+   "device": "AME",
+   "desc": "Key switch enabling emergency button"
+  },
+  {
+   "terminal": "",
+   "device": "SAF",
+   "desc": "Pit entry safety"
+  },
+  {
+   "terminal": "",
+   "device": "STF",
+   "desc": "Pit stop switch"
+  },
+  {
+   "terminal": "",
+   "device": "SPU",
+   "desc": "Pit prop / blocking device"
+  },
+  {
+   "terminal": "",
+   "device": "SLM",
+   "desc": "Speed governor safety switch"
+  },
+  {
+   "terminal": "1/1",
+   "device": "STLM",
+   "desc": "Governor rope tension switch"
+  },
+  {
+   "terminal": "2",
+   "device": "SPM",
+   "desc": "Stop in maintenance push button"
+  },
+  {
+   "terminal": "",
+   "device": "PM",
+   "desc": "Maintenance turn switch"
+  },
+  {
+   "terminal": "",
+   "device": "SBO",
+   "desc": "Car hatch contact"
+  },
+  {
+   "terminal": "2/1",
+   "device": "STP",
+   "desc": "Stop in the car"
+  },
+  {
+   "terminal": "2/2",
+   "device": "SEC",
+   "desc": "Over travel safety contact"
+  },
+  {
+   "terminal": "2/3",
+   "device": "SAR",
+   "desc": "Safety gear switch in car frame"
+  },
+  {
+   "terminal": "3 (IS4 J3,5)",
+   "device": "SAC",
+   "desc": "Landing door closed contact"
+  },
+  {
+   "terminal": "5",
+   "device": "SCA",
+   "desc": "Landing door locked contact"
+  },
+  {
+   "terminal": "6",
+   "device": "FT / PC",
+   "desc": "Photocell/light curtain or car door contact side A"
+  },
+  {
+   "terminal": "6/1",
+   "device": "FT1 / PC1",
+   "desc": "Side B"
+  },
+  {
+   "terminal": "9 \u2192 9FS",
+   "device": "End",
+   "desc": "+24Vdc at 9FS when closed"
+  }
+ ],
+ "params": [
+  {
+   "menu": "F",
+   "num": 0,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Car display LCD512-B on bus (MEM + RST 3)",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 1,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Car push buttons via car display (MEM + RST 3)",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 2,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "IA, ID, ZX, RT via car display (MEM + RST 3)",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 3,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Auto levelling (HLT only)",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 4,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Maintenance activation (NOT USED)",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 5,
+   "range": "0-3",
+   "default": "3",
+   "unit": "",
+   "desc": "Run type: 0 hold-to-run floor & car; 1 not used; 2 auto floor/hold car; 3 full auto",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 6,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "1 = car door stays open at floor",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 7,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Maintenance speed low(0)/high(1)",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 8,
+   "range": "2-10",
+   "default": "2",
+   "unit": "",
+   "desc": "Number of floors",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 9,
+   "range": "0-4",
+   "default": "0",
+   "unit": "",
+   "desc": "Floor 0 car door access: 0 none,1 A,2 B,3 A+B together,4 A/B separate",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 10,
+   "range": "0-4",
+   "default": "0",
+   "unit": "",
+   "desc": "As F09 for floor 1",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 11,
+   "range": "0-4",
+   "default": "0",
+   "unit": "",
+   "desc": "As F09 for floor 2",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 12,
+   "range": "0-4",
+   "default": "0",
+   "unit": "",
+   "desc": "As F09 for floor 3",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 13,
+   "range": "0-4",
+   "default": "0",
+   "unit": "",
+   "desc": "As F09 for floor 4",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 14,
+   "range": "0-4",
+   "default": "0",
+   "unit": "",
+   "desc": "As F09 for floor 5",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 15,
+   "range": "0-4",
+   "default": "0",
+   "unit": "",
+   "desc": "As F09 for floor 6",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 16,
+   "range": "0-4",
+   "default": "0",
+   "unit": "",
+   "desc": "As F09 for floor 7",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 17,
+   "range": "0-4",
+   "default": "0",
+   "unit": "",
+   "desc": "As F09 for floor 8",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 18,
+   "range": "0-4",
+   "default": "0",
+   "unit": "",
+   "desc": "As F09 for floor 9",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 19,
+   "range": "0/1",
+   "default": "1 (HLB)",
+   "unit": "",
+   "desc": "Reset direction; 1 = RT magnet at top floor, resets upward (MEM + RST 3)",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 20,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Emergency direction; HLB = DOWN(0)",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 21,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "1 = overload on J2,7 without LCD512-B",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 22,
+   "range": "0/1",
+   "default": "1",
+   "unit": "",
+   "desc": "Magnetic Door: auto close swing door if opened manually",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 23,
+   "range": "0-1023",
+   "default": "512",
+   "unit": "",
+   "desc": "Motor temperature sensor threshold",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 24,
+   "range": "0",
+   "default": "0",
+   "unit": "",
+   "desc": "Reserved",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 25,
+   "range": "0-65535",
+   "default": "500",
+   "unit": "",
+   "desc": "Reserved",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 26,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Marine lift functions",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 27,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Firefighters manoeuvre",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 28,
+   "range": "floor",
+   "default": "0",
+   "unit": "",
+   "desc": "Firefighters floor",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 29,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "4th attempt to close landing swing door ignoring current limits",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 30,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Car buttons to LCD512-B and sensors to ED1",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 31,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Floor buttons enabled when out of floor",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "F",
+   "num": 32,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Voice 'Hold to run' message",
+   "ref": "ED1 manual E-DOC-00000035 p11"
+  },
+  {
+   "menu": "T",
+   "num": 0,
+   "range": "0-255",
+   "default": "2",
+   "unit": "s",
+   "desc": "Time to open Magnetic Door after lock opens",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "T",
+   "num": 1,
+   "range": "0-255",
+   "default": "8",
+   "unit": "s",
+   "desc": "Lift busy time",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "T",
+   "num": 2,
+   "range": "0-255",
+   "default": "8",
+   "unit": "s",
+   "desc": "Door open time",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "T",
+   "num": 3,
+   "range": "0-255",
+   "default": "5",
+   "unit": "s",
+   "desc": "Delay door contact closing \u2192 lock",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "T",
+   "num": 4,
+   "range": "0-255",
+   "default": "20",
+   "unit": "s",
+   "desc": "Delay door contact \u2192 car light off",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "T",
+   "num": 5,
+   "range": "0/1",
+   "default": "1",
+   "unit": "bit",
+   "desc": "Enable T06",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "T",
+   "num": 6,
+   "range": "0-255",
+   "default": "15",
+   "unit": "min",
+   "desc": "Return to T14 floor after this time",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "T",
+   "num": 7,
+   "range": "0-255",
+   "default": "30",
+   "unit": "min",
+   "desc": "Inverter standby after",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "T",
+   "num": 8,
+   "range": "0-65535",
+   "default": "95",
+   "unit": "s",
+   "desc": "Max travel time",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "T",
+   "num": 9,
+   "range": "0-255",
+   "default": "15",
+   "unit": "0.1s",
+   "desc": "Auto levelling delay",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "T",
+   "num": 10,
+   "range": "0-255",
+   "default": "0",
+   "unit": "0.1s",
+   "desc": "Slide time UP",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "T",
+   "num": 11,
+   "range": "0-255",
+   "default": "0",
+   "unit": "0.1s",
+   "desc": "Slide time DOWN",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "T",
+   "num": 12,
+   "range": "0-255",
+   "default": "8",
+   "unit": "0.1s",
+   "desc": "Delay before direction change",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "T",
+   "num": 13,
+   "range": "0-255",
+   "default": "30",
+   "unit": "s",
+   "desc": "Max landing door (Magnetic Door) movement time",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "T",
+   "num": 14,
+   "range": "floor",
+   "default": "0",
+   "unit": "",
+   "desc": "Park floor after T06",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "T",
+   "num": 15,
+   "range": "0-20",
+   "default": "1",
+   "unit": "s",
+   "desc": "BATT relay delay after mains off",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "T",
+   "num": 16,
+   "range": "0-255",
+   "default": "0",
+   "unit": "0.1s",
+   "desc": "Delay before lock release (K3, K4)",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "MP",
+   "num": 0,
+   "range": "0-3",
+   "default": "0",
+   "unit": "",
+   "desc": "Magnetic Door motors floor 0: 0 none,1 A,2 B,3 both",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "MP",
+   "num": 1,
+   "range": "0-3",
+   "default": "0",
+   "unit": "",
+   "desc": "Magnetic Door motors floor 1: 0 none,1 A,2 B,3 both",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "MP",
+   "num": 2,
+   "range": "0-3",
+   "default": "0",
+   "unit": "",
+   "desc": "Magnetic Door motors floor 2: 0 none,1 A,2 B,3 both",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "MP",
+   "num": 3,
+   "range": "0-3",
+   "default": "0",
+   "unit": "",
+   "desc": "Magnetic Door motors floor 3: 0 none,1 A,2 B,3 both",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "MP",
+   "num": 4,
+   "range": "0-3",
+   "default": "0",
+   "unit": "",
+   "desc": "Magnetic Door motors floor 4: 0 none,1 A,2 B,3 both",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "MP",
+   "num": 5,
+   "range": "0-3",
+   "default": "0",
+   "unit": "",
+   "desc": "Magnetic Door motors floor 5: 0 none,1 A,2 B,3 both",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "MP",
+   "num": 6,
+   "range": "0-3",
+   "default": "0",
+   "unit": "",
+   "desc": "Magnetic Door motors floor 6: 0 none,1 A,2 B,3 both",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "MP",
+   "num": 7,
+   "range": "0-3",
+   "default": "0",
+   "unit": "",
+   "desc": "Magnetic Door motors floor 7: 0 none,1 A,2 B,3 both",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "MP",
+   "num": 8,
+   "range": "0-3",
+   "default": "0",
+   "unit": "",
+   "desc": "Magnetic Door motors floor 8: 0 none,1 A,2 B,3 both",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "MP",
+   "num": 9,
+   "range": "0-3",
+   "default": "0",
+   "unit": "",
+   "desc": "Magnetic Door motors floor 9: 0 none,1 A,2 B,3 both",
+   "ref": "ED1 manual E-DOC-00000035 p12"
+  },
+  {
+   "menu": "NP",
+   "num": 0,
+   "range": "-3..21",
+   "default": "0",
+   "unit": "",
+   "desc": "Number displayed at floor 0 (also EG,G=21,K,KG,OG,UG,ZG)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "NP",
+   "num": 1,
+   "range": "-3..21",
+   "default": "1",
+   "unit": "",
+   "desc": "Number displayed at floor 1 (also EG,G=21,K,KG,OG,UG,ZG)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "NP",
+   "num": 2,
+   "range": "-3..21",
+   "default": "2",
+   "unit": "",
+   "desc": "Number displayed at floor 2 (also EG,G=21,K,KG,OG,UG,ZG)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "NP",
+   "num": 3,
+   "range": "-3..21",
+   "default": "3",
+   "unit": "",
+   "desc": "Number displayed at floor 3 (also EG,G=21,K,KG,OG,UG,ZG)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "NP",
+   "num": 4,
+   "range": "-3..21",
+   "default": "4",
+   "unit": "",
+   "desc": "Number displayed at floor 4 (also EG,G=21,K,KG,OG,UG,ZG)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "NP",
+   "num": 5,
+   "range": "-3..21",
+   "default": "5",
+   "unit": "",
+   "desc": "Number displayed at floor 5 (also EG,G=21,K,KG,OG,UG,ZG)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "NP",
+   "num": 6,
+   "range": "-3..21",
+   "default": "6",
+   "unit": "",
+   "desc": "Number displayed at floor 6 (also EG,G=21,K,KG,OG,UG,ZG)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "NP",
+   "num": 7,
+   "range": "-3..21",
+   "default": "7",
+   "unit": "",
+   "desc": "Number displayed at floor 7 (also EG,G=21,K,KG,OG,UG,ZG)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "NP",
+   "num": 8,
+   "range": "-3..21",
+   "default": "8",
+   "unit": "",
+   "desc": "Number displayed at floor 8 (also EG,G=21,K,KG,OG,UG,ZG)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "NP",
+   "num": 9,
+   "range": "-3..21",
+   "default": "9",
+   "unit": "",
+   "desc": "Number displayed at floor 9 (also EG,G=21,K,KG,OG,UG,ZG)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "PP",
+   "num": 0,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Serial button floor 0 (set 1 where LCD610 installed)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "PP",
+   "num": 1,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Serial button floor 1 (set 1 where LCD610 installed)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "PP",
+   "num": 2,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Serial button floor 2 (set 1 where LCD610 installed)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "PP",
+   "num": 3,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Serial button floor 3 (set 1 where LCD610 installed)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "PP",
+   "num": 4,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Serial button floor 4 (set 1 where LCD610 installed)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "PP",
+   "num": 5,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Serial button floor 5 (set 1 where LCD610 installed)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "PP",
+   "num": 6,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Serial button floor 6 (set 1 where LCD610 installed)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "PP",
+   "num": 7,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Serial button floor 7 (set 1 where LCD610 installed)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "PP",
+   "num": 8,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Serial button floor 8 (set 1 where LCD610 installed)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "PP",
+   "num": 9,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Serial button floor 9 (set 1 where LCD610 installed)",
+   "ref": "ED1 manual E-DOC-00000035 p13"
+  },
+  {
+   "menu": "M",
+   "num": 0,
+   "range": "0-9",
+   "default": "0",
+   "unit": "",
+   "desc": "MGD card floor to program",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "M",
+   "num": 1,
+   "range": "0-255",
+   "default": "",
+   "unit": "",
+   "desc": "Phase 1 time at speed 0 (0.1s)",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "M",
+   "num": 2,
+   "range": "0-255",
+   "default": "",
+   "unit": "",
+   "desc": "Phase 2 normal speed opening (0.1s)",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "M",
+   "num": 3,
+   "range": "0-255",
+   "default": "",
+   "unit": "",
+   "desc": "Phase 3 search max opening low speed (0.1s)",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "M",
+   "num": 4,
+   "range": "0-255",
+   "default": "",
+   "unit": "",
+   "desc": "Phase 4 normal speed closing (0.1s)",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "M",
+   "num": 5,
+   "range": "75-980",
+   "default": "",
+   "unit": "",
+   "desc": "High opening speed",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "M",
+   "num": 6,
+   "range": "75-980",
+   "default": "",
+   "unit": "",
+   "desc": "High closing speed",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "M",
+   "num": 7,
+   "range": "75-980",
+   "default": "",
+   "unit": "",
+   "desc": "Low opening speed",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "M",
+   "num": 8,
+   "range": "75-980",
+   "default": "",
+   "unit": "",
+   "desc": "Low closing speed",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "M",
+   "num": 9,
+   "range": "0-1023",
+   "default": "",
+   "unit": "",
+   "desc": "Current open high speed",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "M",
+   "num": 10,
+   "range": "0-1023",
+   "default": "",
+   "unit": "",
+   "desc": "Current close high speed",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "M",
+   "num": 11,
+   "range": "0-1023",
+   "default": "",
+   "unit": "",
+   "desc": "Current open low speed",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "M",
+   "num": 12,
+   "range": "0-1023",
+   "default": "",
+   "unit": "",
+   "desc": "Current close low speed",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "M",
+   "num": 13,
+   "range": "0-2",
+   "default": "0",
+   "unit": "",
+   "desc": "PWM frequency",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "M",
+   "num": 14,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Current gain",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "M",
+   "num": 15,
+   "range": "0/1",
+   "default": "0",
+   "unit": "",
+   "desc": "Photocell on MGD card (NO)",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "M",
+   "num": 16,
+   "range": "0/1",
+   "default": "0 L / 1 R",
+   "unit": "",
+   "desc": "Reverse for left/right swing",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "M",
+   "num": 17,
+   "range": "0/1",
+   "default": "1",
+   "unit": "",
+   "desc": "Nudge closed before open to unlock",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "M",
+   "num": 18,
+   "range": "0/1",
+   "default": "",
+   "unit": "",
+   "desc": "Save parameters on MGD card",
+   "ref": "ED1 manual E-DOC-00000035 p14"
+  },
+  {
+   "menu": "Other",
+   "num": "MEM 00",
+   "range": "",
+   "default": "",
+   "unit": "",
+   "desc": "1 = save all parameters (not M menu)",
+   "ref": "ED1 manual E-DOC-00000035 p9-10,15"
+  },
+  {
+   "menu": "Other",
+   "num": "RST 00",
+   "range": "",
+   "default": "",
+   "unit": "",
+   "desc": "Reset blocking errors (13/14, safety)",
+   "ref": "ED1 manual E-DOC-00000035 p9-10,15"
+  },
+  {
+   "menu": "Other",
+   "num": "RST 01",
+   "range": "",
+   "default": "",
+   "unit": "",
+   "desc": "Clear error history",
+   "ref": "ED1 manual E-DOC-00000035 p9-10,15"
+  },
+  {
+   "menu": "Other",
+   "num": "RST 02",
+   "range": "",
+   "default": "",
+   "unit": "",
+   "desc": "Reset inverter (HLG only)",
+   "ref": "ED1 manual E-DOC-00000035 p9-10,15"
+  },
+  {
+   "menu": "Other",
+   "num": "RST 03",
+   "range": "",
+   "default": "",
+   "unit": "",
+   "desc": "Reboot ED1 card",
+   "ref": "ED1 manual E-DOC-00000035 p9-10,15"
+  },
+  {
+   "menu": "Other",
+   "num": "STS 00",
+   "range": "",
+   "default": "",
+   "unit": "",
+   "desc": "Minutes powered on",
+   "ref": "ED1 manual E-DOC-00000035 p9-10,15"
+  },
+  {
+   "menu": "Other",
+   "num": "STS 01",
+   "range": "",
+   "default": "",
+   "unit": "",
+   "desc": "Total trips (cannot reset)",
+   "ref": "ED1 manual E-DOC-00000035 p9-10,15"
+  },
+  {
+   "menu": "Other",
+   "num": "CHC 00",
+   "range": "",
+   "default": "",
+   "unit": "",
+   "desc": "Simulate car call to floor",
+   "ref": "ED1 manual E-DOC-00000035 p9-10,15"
+  },
+  {
+   "menu": "Other",
+   "num": "CHP 00",
+   "range": "",
+   "default": "",
+   "unit": "",
+   "desc": "Simulate landing call",
+   "ref": "ED1 manual E-DOC-00000035 p9-10,15"
+  },
+  {
+   "menu": "Other",
+   "num": "DEM",
+   "range": "",
+   "default": "",
+   "unit": "",
+   "desc": "Demo mode \u2013 trade shows only",
+   "ref": "ED1 manual E-DOC-00000035 p9-10,15"
+  },
+  {
+   "menu": "Other",
+   "num": "E",
+   "range": "",
+   "default": "",
+   "unit": "",
+   "desc": "Error log: E 00 4 -P2-N2 = last error, code 4, floor 2, 2 times (last 30)",
+   "ref": "ED1 manual E-DOC-00000035 p9-10,15"
+  }
+ ],
+ "diagnostics": [
+  {
+   "screen": "imp:",
+   "desc": "Magnetic sensors IA ID ZX RT (1=active)"
+  },
+  {
+   "screen": "j1:",
+   "desc": "J1 inputs \u2013 car calls P0..Pz, Pw"
+  },
+  {
+   "screen": "j2:",
+   "desc": "J2 \u2013 contactor control, levelling module, maintenance, inverter alarm, overload, IA, IB, ZX, RT"
+  },
+  {
+   "screen": "sic:",
+   "desc": "J3 safety bits (HLB): F5 2A | AME SAF SLM SPU STF STLM | PM SAR SBO SEC SPM STP | CM CM1 FT FT1 VF5+ | SAC | SCA | FC FT FT1 PC1 PC2 | /"
+  },
+  {
+   "screen": "out0:",
+   "desc": "Lift busy, lift on floor, main power, relay BAT, ERROR, open A, open B, close car doors, K_AX"
+  },
+  {
+   "screen": "out1:",
+   "desc": "APA, APB, UP, DOWN, low speed, high speed, K_PR"
+  },
+  {
+   "screen": "dc:",
+   "desc": "Car button pressed (with car display)"
+  },
+  {
+   "screen": "sts:",
+   "desc": "Hex status \u2013 ELTEC only"
+  }
+ ],
+ "pages": [
+  {
+   "pdf_page": 1,
+   "sheet": "",
+   "title": "Cover"
+  },
+  {
+   "pdf_page": 2,
+   "sheet": "",
+   "title": "Copyright / index"
+  },
+  {
+   "pdf_page": 3,
+   "sheet": "1",
+   "title": "INSTALLATION PUSH BUTTON"
+  },
+  {
+   "pdf_page": 4,
+   "sheet": "2",
+   "title": "FLOOR RETURN SYSTEM BATTERY PACK"
+  },
+  {
+   "pdf_page": 5,
+   "sheet": "3",
+   "title": "CONVERTER AND MAIN POWER CIRCUIT"
+  },
+  {
+   "pdf_page": 6,
+   "sheet": "4",
+   "title": "MOTOR WIRING"
+  },
+  {
+   "pdf_page": 7,
+   "sheet": "5A",
+   "title": "EMERGENCY PUSH BUTTON AND MAIN SWITCH (CONNECTED WITH SHEATHED CABLES)"
+  },
+  {
+   "pdf_page": 8,
+   "sheet": "5B",
+   "title": "EMERGENCY PUSH BUTTON AND MAIN SWITCH (CONNECTED SINGLE COLOURED W IRES)"
+  },
+  {
+   "pdf_page": 9,
+   "sheet": "6B",
+   "title": "TERMINAL IN THE MAIN CONTROL PANEL WITH LIGHT CURTAINS"
+  },
+  {
+   "pdf_page": 10,
+   "sheet": "6C",
+   "title": "TERMINAL IN THE CONTROL PANEL WITH SLIDING DOORS"
+  },
+  {
+   "pdf_page": 11,
+   "sheet": "7B",
+   "title": "Safety circuit (7B) \u2013 check image"
+  },
+  {
+   "pdf_page": 12,
+   "sheet": "7C",
+   "title": "SAFETY CIRCUIT WITH CAR DOOR AND SW ING DOORS AT THE FLOORS"
+  },
+  {
+   "pdf_page": 13,
+   "sheet": "7D",
+   "title": "SAFETY CIRCUIT WITH AUTOMATIC SLIDING DOORS"
+  },
+  {
+   "pdf_page": 14,
+   "sheet": "8A",
+   "title": "ELSA LANDING DOORS WITH LOCKS WITH MECHANICAL LOCKS"
+  },
+  {
+   "pdf_page": 15,
+   "sheet": "8B",
+   "title": "ELSA OR ELETTRA LANDING DOORS WITH ELECTRICAL LOCKS AND SIMULTANEOUS OPENING"
+  },
+  {
+   "pdf_page": 16,
+   "sheet": "8C",
+   "title": "ELSA OR ELETTRA LANDING DOORS WITH ELECTRICAL LOCKS AND SELECTIVE OPENING"
+  },
+  {
+   "pdf_page": 17,
+   "sheet": "8D",
+   "title": "AUTOMATIC SLIDING DOORS"
+  },
+  {
+   "pdf_page": 18,
+   "sheet": "9",
+   "title": "MAINTENANCE PUSH BUTTON, CAR LIGHTS, ALARM CIRCUIT"
+  },
+  {
+   "pdf_page": 19,
+   "sheet": "10",
+   "title": "WIRING OF THE FLOOR BUTTON, FLOOR SERIAL DISPLAYS, MAGNETIC DOOR CARDS"
+  },
+  {
+   "pdf_page": 20,
+   "sheet": "11",
+   "title": "TERMINAL IN THE CONVERTER CONTROL PANEL"
+  },
+  {
+   "pdf_page": 21,
+   "sheet": "12A",
+   "title": "CAR PUSH BUTTON"
+  },
+  {
+   "pdf_page": 22,
+   "sheet": "12B",
+   "title": "BCA REGULATION CAR PUSH BUTTON"
+  },
+  {
+   "pdf_page": 23,
+   "sheet": "13A",
+   "title": "TELEPHONE DIALER AND GSM ONLY VOICE DIALER"
+  },
+  {
+   "pdf_page": 24,
+   "sheet": "13B",
+   "title": "TELEPHONE DIALER AND GSM MODULE FOR BCA REGULATION LIFTS"
+  },
+  {
+   "pdf_page": 25,
+   "sheet": "14",
+   "title": "4G GSM MODULE FOR THE REMOTE CONTROL OF THE ED1 CARD"
+  },
+  {
+   "pdf_page": 26,
+   "sheet": "15",
+   "title": "TFT CAR DISPLAY OPTIONAL"
+  },
+  {
+   "pdf_page": 27,
+   "sheet": "16",
+   "title": "CONNECTION OF THE TOUCH BUTTON TO THE CAR DISPLAY"
+  },
+  {
+   "pdf_page": 28,
+   "sheet": "17",
+   "title": "CONNECTION OF A GENERIC BUTTON T O THE CAR DISPLAY"
+  },
+  {
+   "pdf_page": 29,
+   "sheet": "18",
+   "title": "VOICE SYNTHESIZER"
+  },
+  {
+   "pdf_page": 30,
+   "sheet": "19",
+   "title": "FLAT FLEXIBLE CABLES"
+  },
+  {
+   "pdf_page": 31,
+   "sheet": "20A",
+   "title": "SWING LANDING DOORS LOCK CONNECTION (MECHANICAL OPENING)"
+  },
+  {
+   "pdf_page": 32,
+   "sheet": "20B",
+   "title": "CONNECTION OF LRC EG1 ELECTRIC LOCK FOR SW ING LANDING DOORS"
+  },
+  {
+   "pdf_page": 33,
+   "sheet": "",
+   "title": "Landing door lock detail (no title text)"
+  },
+  {
+   "pdf_page": 34,
+   "sheet": "20C",
+   "title": "SLIDING LANDING DOORS LOCK CONNECTION"
+  },
+  {
+   "pdf_page": 35,
+   "sheet": "20D",
+   "title": "CONNECTION OF LANDING DOORS ELETTRA"
+  },
+  {
+   "pdf_page": 36,
+   "sheet": "20E",
+   "title": "CONNECTION OF LANDING DOORS ELETTRA"
+  },
+  {
+   "pdf_page": 37,
+   "sheet": "21C",
+   "title": "VEGA LIGHT CURTAINS IN THE CAR ENTRANCE WITHOUT THE CAR DOORS / SINGLE ACCESS"
+  },
+  {
+   "pdf_page": 38,
+   "sheet": "21D",
+   "title": "VEGA LIGHT CURTAINS IN THE CAR ENTRANCES WITHOUT THE CAR DOORS / DOUBLE ACCESS"
+  },
+  {
+   "pdf_page": 39,
+   "sheet": "21E",
+   "title": "FERMATOR 40/10 PM SLIDING CAR DOORS WITH PHOTOCELLS - SINGLE ENTRANCE SIDE A"
+  },
+  {
+   "pdf_page": 40,
+   "sheet": "21F",
+   "title": "FERMATOR 40/10 PM SLIDING CAR DOORS WITH PHOTOCELLS - DOUBLE ENTRANCE SIDE B"
+  },
+  {
+   "pdf_page": 41,
+   "sheet": "21G",
+   "title": "FERMATOR 40/10 PM SLIDING CAR DOORS WITH LIGHT CURTAINS - SINGLE ENTRANCE SIDE A"
+  },
+  {
+   "pdf_page": 42,
+   "sheet": "21H",
+   "title": "FERMATOR 40/10 PM SLIDING CAR DOORS WITH LIGHT CURTAINS - DOUBLE ENTRANCE SIDE B"
+  },
+  {
+   "pdf_page": 43,
+   "sheet": "",
+   "title": "TERMINAL CONNECTION OF THE CAR FOLDING DOORS LTL \u00ad SINGLE ACCESS"
+  },
+  {
+   "pdf_page": 44,
+   "sheet": "21J",
+   "title": "LTL folding doors single access with light curtains"
+  },
+  {
+   "pdf_page": 45,
+   "sheet": "",
+   "title": "TERMINAL CONNECTION OF THE CAR FOLDING DOORS LTL \u00ad DOUBLE ACCESS"
+  },
+  {
+   "pdf_page": 46,
+   "sheet": "21M",
+   "title": "TERMINAL CONNECTION OF THE CAR FOLDING DOORS LTL \u00ad DOUBLE ACCESS WITH LIGHT CURTAINS"
+  },
+  {
+   "pdf_page": 47,
+   "sheet": "21M",
+   "title": "LTL folding doors double access side B with light curtains"
+  },
+  {
+   "pdf_page": 48,
+   "sheet": "21N",
+   "title": "FERMATOR 40/10 PM SLIDING CAR LANDING SWING DOORS - SINGLE ENTRANCE SIDE A"
+  },
+  {
+   "pdf_page": 49,
+   "sheet": "21O",
+   "title": "FERMATOR 40/10 PM SLIDING CAR AND SW ING LANDING DOORS - DOUBLE ENTRANCE SIDE B"
+  },
+  {
+   "pdf_page": 50,
+   "sheet": "22A",
+   "title": "Shaft wiring 22A (no title text \u2013 check image)"
+  },
+  {
+   "pdf_page": 51,
+   "sheet": "22B",
+   "title": "Shaft wiring 22B"
+  },
+  {
+   "pdf_page": 52,
+   "sheet": "22C",
+   "title": "Shaft wiring 22C"
+  },
+  {
+   "pdf_page": 53,
+   "sheet": "22D",
+   "title": "Shaft wiring 22D"
+  },
+  {
+   "pdf_page": 54,
+   "sheet": "22E",
+   "title": "Shaft wiring 22E"
+  },
+  {
+   "pdf_page": 55,
+   "sheet": "23",
+   "title": "CONNECTION OF THE AUTOMATIC DOOR MAGNETICDOOR"
+  },
+  {
+   "pdf_page": 56,
+   "sheet": "24",
+   "title": "SHAFT SAFETY DEVICES CONNECTION"
+  },
+  {
+   "pdf_page": 57,
+   "sheet": "25A",
+   "title": "Magnet & sensor placing (25A)"
+  },
+  {
+   "pdf_page": 58,
+   "sheet": "25B",
+   "title": "Magnet & sensor placing (25B)"
+  },
+  {
+   "pdf_page": 59,
+   "sheet": "26",
+   "title": "ED1 CARD - OVERLOAD AND FIRE MANOUVER CONNECTION"
+  },
+  {
+   "pdf_page": 60,
+   "sheet": "27",
+   "title": "LEGEND"
+  },
+  {
+   "pdf_page": 61,
+   "sheet": "28",
+   "title": "LEGEND"
+  },
+  {
+   "pdf_page": 62,
+   "sheet": "29",
+   "title": "LEGEND"
+  },
+  {
+   "pdf_page": 63,
+   "sheet": "30",
+   "title": "LEGEND"
+  },
+  {
+   "pdf_page": 64,
+   "sheet": "31",
+   "title": "INSULATION CHECK"
+  },
+  {
+   "pdf_page": 65,
+   "sheet": "32A",
+   "title": "TIPS & TRICKS"
+  },
+  {
+   "pdf_page": 66,
+   "sheet": "32B",
+   "title": "TIPS & TRICKS"
+  },
+  {
+   "pdf_page": 67,
+   "sheet": "32C",
+   "title": "TIPS & TRICKS"
+  },
+  {
+   "pdf_page": 68,
+   "sheet": "32D",
+   "title": "TIPS & TRICKS"
+  },
+  {
+   "pdf_page": 69,
+   "sheet": "33",
+   "title": "REVISIONS"
+  },
+  {
+   "pdf_page": 70,
+   "sheet": "",
+   "title": "Back page"
+  }
+ ],
+ "tips": [
+  "Reset Toshiba drive: press STOP twice or switch main power off >10 s.",
+  "Reset after pit access: a) RST 00>1; b) short MAN\u201324B for 1 s; c) car-top maintenance switch NORMAL\u2192INSPECTION\u2192NORMAL; d) press a floor/car button 6 times within 6\u201310 s.",
+  "Inverter display PrA = safety series open (0V on 9FS); 0.0 = closed (+24Vdc on 9FS).",
+  "Speed governor test: link AV and D, move down with emergency push button; UNPLUG STLM link after test (sheet 6B).",
+  "Insulation test: car out of floor, disconnect MTB, open SLN, lift 'INSULATION TEST' wire from PE, unplug J3 & J11 (and Vega BU wires from 1000), test motor/mains/safety (1,2,3,5,6,9)/ALS to ground, reconnect all (sheet 31).",
+  "Car display LED: DL2 slow flash = programmed; DL1 slow = serial OK, fast = broken link/incorrect serial (manual p3).",
+  "After changing F00-F02/F19/F30 etc: MEM 00>1 then RST 03>1."
+ ],
+ "chain_model": [
+  {
+   "id": "F5",
+   "device": "F5 2A fuse",
+   "desc": "Safety circuit fuse, J12,3 +24 \u2192 terminal 1 (safety line beginning)",
+   "location": "Controller (ED1 card, car-top MC box)",
+   "t_in": "J12,3 (+24)",
+   "t_out": "1",
+   "monitor": "IS1 (J3,2)",
+   "err_move": 7,
+   "err_stop": 13,
+   "inferred": "",
+   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+  },
+  {
+   "id": "AME",
+   "device": "AME",
+   "desc": "Key switch enabling emergency button",
+   "location": "Emergency box (controller/landing)",
+   "t_in": "1",
+   "t_out": "\u2014",
+   "monitor": "IS2 (J3,3)",
+   "err_move": 8,
+   "err_stop": 14,
+   "inferred": "Location from legend + sheet 5A; series via 1A/MV1",
+   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+  },
+  {
+   "id": "SAF",
+   "device": "SAF",
+   "desc": "Pit entry safety",
+   "location": "Pit",
+   "t_in": "\u2014",
+   "t_out": "\u2014",
+   "monitor": "IS2 (J3,3)",
+   "err_move": 8,
+   "err_stop": 14,
+   "inferred": "",
+   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+  },
+  {
+   "id": "STF",
+   "device": "STF",
+   "desc": "Pit stop switch",
+   "location": "Pit",
+   "t_in": "\u2014",
+   "t_out": "\u2014",
+   "monitor": "IS2 (J3,3)",
+   "err_move": 8,
+   "err_stop": 14,
+   "inferred": "",
+   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+  },
+  {
+   "id": "SPU",
+   "device": "SPU",
+   "desc": "Pit prop / blocking device",
+   "location": "Pit",
+   "t_in": "\u2014",
+   "t_out": "\u2014",
+   "monitor": "IS2 (J3,3)",
+   "err_move": 8,
+   "err_stop": 14,
+   "inferred": "",
+   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+  },
+  {
+   "id": "SLM",
+   "device": "SLM",
+   "desc": "Speed governor safety switch",
+   "location": "Shaft (governor; on shaft devices line sheet 24)",
+   "t_in": "\u2014",
+   "t_out": "1/1",
+   "monitor": "IS2 (J3,3) \u2013 also J2 IN02 (S2) taps 1/1",
+   "err_move": 8,
+   "err_stop": 14,
+   "inferred": "Exact governor location not stated",
+   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+  },
+  {
+   "id": "STLM",
+   "device": "STLM",
+   "desc": "Governor rope tension switch",
+   "location": "Pit/shaft (governor rope)",
+   "t_in": "1/1",
+   "t_out": "2",
+   "monitor": "IS2 (J3,3)",
+   "err_move": 8,
+   "err_stop": 14,
+   "inferred": "Location inferred from function",
+   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+  },
+  {
+   "id": "SPM",
+   "device": "SPM",
+   "desc": "Stop on maintenance push-button box",
+   "location": "Car top",
+   "t_in": "2",
+   "t_out": "\u2014",
+   "monitor": "IS3 (J3,4)",
+   "err_move": 9,
+   "err_stop": 15,
+   "inferred": "",
+   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+  },
+  {
+   "id": "PM",
+   "device": "PM",
+   "desc": "Maintenance (inspection) turn switch",
+   "location": "Car top",
+   "t_in": "\u2014",
+   "t_out": "\u2014",
+   "monitor": "IS3 (J3,4)",
+   "err_move": 9,
+   "err_stop": 15,
+   "inferred": "",
+   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+  },
+  {
+   "id": "SBO",
+   "device": "SBO",
+   "desc": "Car hatch contact (13/14)",
+   "location": "Car (roof hatch)",
+   "t_in": "\u2014",
+   "t_out": "\u2014",
+   "monitor": "IS3 (J3,4)",
+   "err_move": 9,
+   "err_stop": 15,
+   "inferred": "",
+   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+  },
+  {
+   "id": "STP",
+   "device": "STP",
+   "desc": "Stop in the car",
+   "location": "Car (COP)",
+   "t_in": "\u2014",
+   "t_out": "2/1",
+   "monitor": "IS3 (J3,4)",
+   "err_move": 9,
+   "err_stop": 15,
+   "inferred": "",
+   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+  },
+  {
+   "id": "SEC",
+   "device": "SEC",
+   "desc": "Over-travel safety contact",
+   "location": "Shaft (top/bottom limit)",
+   "t_in": "2/1",
+   "t_out": "2/2",
+   "monitor": "IS3 (J3,4)",
+   "err_move": 9,
+   "err_stop": 15,
+   "inferred": "Location inferred from function",
+   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+  },
+  {
+   "id": "SAR",
+   "device": "SAR",
+   "desc": "Safety gear switch in car frame",
+   "location": "Car frame",
+   "t_in": "2/2",
+   "t_out": "2/3 \u2192 3",
+   "monitor": "IS3 (J3,4)",
+   "err_move": 9,
+   "err_stop": 15,
+   "inferred": "",
+   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+  },
+  {
+   "id": "FC_IS4",
+   "device": "FC 11/14 (light curtain relay) / CM, CM1",
+   "desc": "Light-curtain relay contact (7B) or mechanical door closing protection (sic display)",
+   "location": "Car / car door",
+   "t_in": "3",
+   "t_out": "J3,5",
+   "monitor": "IS4 (J3,5)",
+   "err_move": null,
+   "err_stop": null,
+   "inferred": "IS4 has no error code in manual; branch varies by door type (sheets 32A-D)",
+   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+  },
+  {
+   "id": "SAC",
+   "device": "SAC",
+   "desc": "Landing door CLOSED contacts (all floors in series)",
+   "location": "Landing doors",
+   "t_in": "3 (via 3A/MV3)",
+   "t_out": "5",
+   "monitor": "IS5 (J3,6)",
+   "err_move": 10,
+   "err_stop": null,
+   "inferred": "",
+   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+  },
+  {
+   "id": "SCA",
+   "device": "SCA",
+   "desc": "Landing door LOCKED contacts (all floors in series)",
+   "location": "Landing doors",
+   "t_in": "5 (via 4A/MV5)",
+   "t_out": "6",
+   "monitor": "IS6 (J3,7)",
+   "err_move": 11,
+   "err_stop": null,
+   "inferred": "",
+   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+  },
+  {
+   "id": "FT",
+   "device": "FT / PC / FC 21/24",
+   "desc": "Car door contacts PC/PC1 or light curtain FT/FT1 (via relay FC)",
+   "location": "Car door / entrance",
+   "t_in": "6 (via 5A/MV6)",
+   "t_out": "6/1 \u2192 9 / 9FS",
+   "monitor": "IS7 (J3,8); IS8 (J3,9) shown same node",
+   "err_move": 12,
+   "err_stop": null,
+   "inferred": "7B: 6\u2192FC 21/24\u2192J3,8. Car-door versions (7C/7D, 32C/D): 6\u2192PC\u21926/1\u2192PC1\u21929",
+   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+  },
+  {
+   "id": "END",
+   "device": "Safety line end 9FS",
+   "desc": "J4 \u2192 up/down contactors S/D via K1/K2; 9FS to drive",
+   "location": "Controller/converter",
+   "t_in": "9",
+   "t_out": "9FS",
+   "monitor": "Drive shows PrA (open) / 0.0 (closed)",
+   "err_move": null,
+   "err_stop": null,
+   "inferred": "",
+   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+  }
+ ],
+ "monitor_points": [
+  {
+   "point": "Terminal 1 / MV 1",
+   "input": "IS1 J3,2",
+   "after": "F5 2A",
+   "note": "Should be +24 Vdc vs GND (terminal 1000)"
+  },
+  {
+   "point": "Terminal 1/1 / MV 1/1",
+   "input": "J2 IN02 (S2)",
+   "after": "AME, SAF, STF, SPU, SLM",
+   "note": ""
+  },
+  {
+   "point": "Terminal 2",
+   "input": "IS2 J3,3",
+   "after": "STLM",
+   "note": ""
+  },
+  {
+   "point": "Terminal 2/1",
+   "input": "\u2014",
+   "after": "SPM, PM, SBO, STP",
+   "note": "meter point"
+  },
+  {
+   "point": "Terminal 2/2",
+   "input": "\u2014",
+   "after": "SEC",
+   "note": "meter point"
+  },
+  {
+   "point": "Terminal 2/3 \u2192 3 / MV 3",
+   "input": "IS3 J3,4",
+   "after": "SAR",
+   "note": ""
+  },
+  {
+   "point": "Terminal 5 / MV 5",
+   "input": "IS5 J3,6",
+   "after": "SAC (landing doors closed)",
+   "note": ""
+  },
+  {
+   "point": "Terminal 6 / MV 6",
+   "input": "IS6 J3,7",
+   "after": "SCA (landing doors locked)",
+   "note": ""
+  },
+  {
+   "point": "Terminal 9 / 9FS",
+   "input": "IS7 J3,8",
+   "after": "car door / light curtain",
+   "note": "Drive: PrA = 0V on 9FS, 0.0 = +24Vdc"
+  }
+ ],
+ "chain_caveats": [
+  "Supply is +24 Vdc from J12,3 through F5 2A (sheet 7B); voltage measurements vs GND (terminal 1000) are inferred from the drawing, the manual does not give a metering procedure.",
+  "J3 pin \u2194 IS mapping read from sheet 7B drawing (J3,2=IS1 \u2026 J3,9=IS8).",
+  "Sheet 7B is the light-curtain/no-car-door variant; 7C (car door + swing landing doors) and 7D (automatic sliding doors) differ after terminal 6.",
+  "IS4 not referenced by any error code."
+ ]
+};
+const $=s=>document.querySelector(s),e=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const log=$("#log");
+function bub(html,me){const d=document.createElement("div");d.className="b"+(me?" me":"");d.innerHTML=html;log.appendChild(d);log.scrollTop=1e9;return d}
+function chips(list){if(!list||!list.length)return;const d=document.createElement("div");d.className="chips";
+ list.slice(0,6).forEach(([l,q])=>{const b=document.createElement("button");b.textContent=l;b.onclick=()=>ask(q,l);d.appendChild(b)});log.appendChild(d);log.scrollTop=1e9}
+const pad=n=>String(n).padStart(2,"0");
+const FX=c=>D.faults.find(f=>f.code==c);
+// ---------- renderers ----------
+function faultHTML(f){const ann=f.causes.filter(c=>/^Annotation/i.test(c)),cs=f.causes.filter(c=>!/^Annotation/i.test(c));
+ const segs=D.chain_model.filter(s=>s.err_move==f.code||s.err_stop==f.code);
+ return `<h3>E ${pad(f.code)} · ${e(f.name)}</h3><div>${e(f.meaning)}</div>`+
+ (cs.length?`<div class=h>Likely causes</div><ul>${cs.map(c=>`<li>${e(c)}</li>`).join("")}</ul>`:"")+
+ (f.checks.length?`<div class=h>Checks</div><ol>${f.checks.map(c=>`<li>${e(c)}</li>`).join("")}</ol>`:"")+
+ (segs.length?`<div class=h>Safety chain section</div>${segs.map(s=>`<span class=k>${e(s.device)}</span> <span class=ref>(${e(s.location)})</span>`).join(", ")}<div class=ref>Monitored by ${e(segs[segs.length-1].monitor)}</div>`:"")+
+ ann.map(a=>`<div class=hn>✎ Handwritten note in manual copy: ${e(a.replace(/^Annotation[^:]*:\s*/,""))}</div>`).join("")+
+ (f.checks.some(c=>/inferred|derived/i.test(c))?"":`<div class=cv>⚠ Meaning is from the manual; the check steps are compiled from the schematic/manual, not an ELTEC procedure.</div>`)+
+ `<div class=ref>📄 ${e(f.ref)}</div>`}
+function segHTML(s){return `<h3>${e(s.device)}</h3><div>${e(s.desc)}</div><table>
+<tr><td>Location</td><td>${e(s.location)}</td></tr><tr><td>Terminals</td><td class=k>${e(s.t_in)} → ${e(s.t_out)}</td></tr>
+<tr><td>Monitored by</td><td>${e(s.monitor)}</td></tr><tr><td>Error</td><td>${s.err_move!=null?"E "+pad(s.err_move)+" (moving)":"—"}${s.err_stop!=null?", E "+pad(s.err_stop)+" (stopped)":""}</td></tr></table>`+
+ (s.inferred?`<div class=cv>⚠ Inferred: ${e(s.inferred)}</div>`:"")+`<div class=ref>📄 ${e(s.ref)}</div>`}
+function chainHTML(){return `<h3>HLB safety chain (series order)</h3><ol>${D.chain_model.map(s=>`<li><span class=k>${e(s.device)}</span> – ${e(s.desc)} <span class=ref>[${e(s.location)}] ${e(s.t_in)}→${e(s.t_out)} · ${e(s.monitor)}</span></li>`).join("")}</ol>
+<div class=h>Monitor / meter points</div><table>${D.monitor_points.map(m=>`<tr><td class=k>${e(m.point)}</td><td>${e(m.input)}</td><td>after ${e(m.after)}</td></tr>`).join("")}</table>
+<div class=h>Programmer</div>ENTER from CpuCab screen → 'sic:' shows J3 bits: F5 | AME…STLM | PM…STP | CM/FT | SAC | SCA | PC/FT | / (0 = open).
+${D.chain_caveats.map(c=>`<div class=cv>⚠ ${e(c)}</div>`).join("")}<div class=ref>📄 Sheet 7B (PDF p11), 32A–D (PDF p65–68); manual p15, p18</div>`}
+function ioHTML(x){return `<span class=k>${e(x.terminal)}</span> — <b>${e(x.name)}</b><div>${e(x.function)}</div><div class=ref>📄 ${e(x.ref)}</div>`}
+function parHTML(p){return `<h3>${e(p.menu)} ${typeof p.num=="number"?pad(p.num):e(p.num)}</h3><div>${e(p.desc)}</div>${p.range?`<div class=ref>Range ${e(p.range)} · default ${e(p.default||"—")} ${e(p.unit)}</div>`:""}<div class=ref>📄 ${e(p.ref)}</div>
+<div class=ref>To change: ESC → menu → ENTER → UP/DOWN → ENTER; save with MEM 00>1 (manual p8-9).</div>`}
+const RESET=`<h3>Reset steps</h3><ul>
+<li><b>Blocking safety errors (13/14 etc.)</b>: RST 00 → set 1 → ENTER (manual p10). Or maintenance switch NORMAL→INSPECTION→NORMAL quickly.</li>
+<li><b>After pit access</b> (sheet 32A): a) RST 00>1; b) short MAN–24B for 1 s; c) car-top switch NORMAL→INSPECTION→NORMAL; d) push a floor/car button 6× within 6–10 s.</li>
+<li><b>Clear error history</b>: RST 01>1.</li><li><b>Inverter</b>: RST 02>1 (manual says HLG only); Toshiba drive on HLB: press STOP twice or mains off &gt;10 s (sheet 32A).</li>
+<li><b>Reboot ED1</b>: RST 03>1 (needed after MEM when changing F00–F02, F19).</li><li><b>E29 PTC</b>: RST 00>1 + mains OFF/ON.</li></ul>
+<div class=cv>⚠ Manual wording conflicts: error table says "RST 00 1", RST section calls it RST 00 0→1. Both mean menu RST, function 00, set value 1.</div><div class=ref>📄 Manual p10, p15–16; sheet 32A</div>`;
+// ---------- meter-out guide ----------
+const PTS=[{t:"1",after:"F5 2A fuse",inp:"IS1"},{t:"1/1",after:"AME, SAF, STF, SPU, SLM",inp:"S2 (J2 IN02)"},{t:"2",after:"STLM",inp:"IS2"},{t:"2/1",after:"SPM, PM, SBO, STP",inp:"—"},{t:"2/2",after:"SEC",inp:"—"},{t:"3",after:"SAR",inp:"IS3"},{t:"5",after:"SAC landing doors closed",inp:"IS5"},{t:"6",after:"SCA landing doors locked",inp:"IS6"},{t:"9 / 9FS",after:"car door PC / light curtain FT",inp:"IS7"}];
+let M=null;
+function meterStart(){M={lo:-1,hi:PTS.length-1};return meterStep(`<h3>Meter-out: halving the safety chain</h3><div>Meter reference: GND (terminal 1000). Expect ≈ +24 Vdc where the chain is made. Tip: first read 'sic:' on the programmer – the first 0 bit already narrows it.</div><div class=cv>⚠ Inferred procedure: points & order from sheet 7B/32A; the manual gives no metering procedure. Work safely – isolate/inspection as per your site rules.</div>`)}
+function meterStep(pre){if(M.hi-M.lo<=1){const lostAt=PTS[M.hi],prev=M.lo<0?"J12,3 (+24 supply)":"terminal "+PTS[M.lo].t;const r=(pre||"")+`<h3>✅ Open section found</h3><div>Voltage present at <b>${e(prev)}</b> but lost at <b>terminal ${e(lostAt.t)}</b>.</div><div>Suspect: <b>${e(lostAt.after)}</b>.</div><div class=ref>Check each contact in that section in turn. 📄 Sheet 7B / 32A</div>`;M=null;return [r,[["Show safety chain","safety chain"],["Reset steps","reset steps"]]]}
+ const mid=Math.floor((M.lo+M.hi+1)/2),p=PTS[mid];M.mid=mid;
+ return [(pre||"")+`<div class=h>Step</div>Measure terminal <span class=k>${e(p.t)}</span> to GND (1000). <div class=ref>This point is after: ${e(p.after)} · monitored by ${e(p.inp)}</div>`,[["24 V present ✔","__m_ok"],["0 V ✘","__m_bad"],["Stop guide","__m_stop"]]]}
+// ---------- matcher ----------
+const SYN=[
+ [/won'?t move|wont move|not moving|doesn'?t move|dead|stuck|no run|won'?t go|wont go|not running|out of service/,{f:[7,8,9,10,11,12,13,14,15,1,28],w:2,chain:1}],
+ [/safety (chain|circuit|line|series)|chain (open|broken)|9fs|\bpra\b/,{chain:3,f:[13,14,15,7,8,9]}],
+ [/pit|pit (switch|stop)|stf|saf\b|spu|prop/,{f:[14,8],seg:["SAF","STF","SPU"],w:2}],
+ [/governor|gov\b|overspeed|slm|stlm|rope tension/,{f:[14,8],seg:["SLM","STLM"],w:2}],
+ [/door.*(won'?t|not|doesn'?t|wont) clos|won'?t close|not closing|clos.*fail/,{f:[23,25,26,4],w:2}],
+ [/door.*(won'?t|not|wont) open|won'?t open|not opening/,{f:[22],w:2}],
+ [/door open light|door open|landing door open|door.*left open/,{f:[4,10,11],w:1.5,seg:["SAC","SCA"]}],
+ [/lock|interlock|sca\b|catenacc/,{f:[11,26],seg:["SCA"],w:2}],
+ [/sac\b|door closed contact/,{f:[10],seg:["SAC"],w:2}],
+ [/photo ?cell|light ?curtain|\bft1?\b|vega|beam/,{f:[12,23],seg:["FT"],w:2}],
+ [/car door|gate|\bpc1?\b/,{f:[12,25],seg:["FT"],w:1.5}],
+ [/level|levell?ing|not level|stops? (high|low|short)|step|mis.?level|magnet|\bia\b|\bid\b/,{f:[16,17,18,19,20,30],w:2}],
+ [/overrun|over.?travel|over ?run|\bsec\b|limit/,{f:[9,15,1],seg:["SEC"],w:2}],
+ [/no power|power ?cut|dead|nothing on|blackout|mains/,{f:[31,7,13],w:1.2,io:["F2","F3","F0"]}],
+ [/trip|tripping|blow|blown|fuse/,{f:[7,13],io:["F5","F1","F6","F8"],w:1.5}],
+ [/battery|batt|emergency lower|low volt/,{f:[31],w:2}],
+ [/bus|rs ?485|display blank|display flash|comms|communicat/,{f:[21,5,6],w:2}],
+ [/hot|temp|ptc|overheat/,{f:[29],w:2}],
+ [/inverter|drive|toshiba|vfd/,{f:[28],w:2}],
+ [/stop (button|switch).*car|car stop|\bstp\b|hatch|sbo|inspection|maint/,{f:[15,9],seg:["STP","SBO","PM","SPM"],w:1.5}],
+ [/safety gear|\bsar\b|safeties/,{f:[15,9],seg:["SAR"],w:2}],
+ [/contactor|stuck contactor|welded|\bs1\b/,{f:[2],w:2}],
+ [/timeout|took too long|too slow/,{f:[1,6,25],w:1.2}],
+ [/overload|weight|psc/,{io:["J2 IN05"],w:1.5}],
+ [/fire|firefight/,{p:["F27","F28"],w:2}],
+];
+function score(q){const res={f:{},seg:{},io:{},p:{},chain:0};
+ for(const[re,o]of SYN)if(re.test(q)){const w=o.w||1;(o.f||[]).forEach((c,i)=>res.f[c]=(res.f[c]||0)+w*(1-i*0.06));(o.seg||[]).forEach(s=>res.seg[s]=(res.seg[s]||0)+w);(o.io||[]).forEach(s=>res.io[s]=(res.io[s]||0)+w);(o.p||[]).forEach(s=>res.p[s]=(res.p[s]||0)+w);res.chain+=o.chain||0}
+ // fuzzy token overlap against fault names/meanings
+ const toks=q.split(/[^a-z0-9]+/).filter(t=>t.length>3);
+ if(toks.length)D.faults.forEach(f=>{const hay=(f.name+" "+f.meaning).toLowerCase();let s=0;toks.forEach(t=>{if(hay.includes(t))s+=0.6});if(s)res.f[f.code]=(res.f[f.code]||0)+s});
+ return res}
+function ioFind(q){const n=q.replace(/\s+/g,"").toLowerCase();return D.io.filter(x=>{const t=x.terminal.toLowerCase().replace(/\s+/g,"");return t.split(/[\/,]/).some(p=>p&&(p==n))||t==n||t.startsWith(n+"/")||t.split(" ")[0]==n})}
+function answer(raw){let q=raw.toLowerCase().trim().replace(/[’']/g,"'");
+ if(q=="__m_stop"){M=null;return ["Meter-out guide stopped.",[["Show safety chain","safety chain"]]]}
+ if(q=="__m_ok"||q=="__m_bad"){if(!M)return answer("meter it out");if(q=="__m_ok")M.lo=M.mid;else M.hi=M.mid;return meterStep()}
+ if(/meter|halv|track down|find (the )?open|which switch is open|trace/.test(q))return meterStart();
+ if(/^(help|hi|hello|\?)$/.test(q))return [HELP,STARTCH];
+ if(/reset/.test(q)&&!/\b(e|err|error|code)\s*\d/.test(q))return [RESET,[["Show safety chain","safety chain"]]];
+ // between terminals
+ let m=q.match(/between (?:terminal |term |t)?([\d\/]+|9fs) (?:and|&|-|to) (?:terminal |term |t)?([\d\/]+|9fs)/);
+ if(m){const ord=["1","1/1","2","2/1","2/2","2/3","3","5","6","6/1","9","9fs"],a=ord.indexOf(m[1]),b=ord.indexOf(m[2]);
+  if(a<0||b<0)return [`I don't have terminal ${e(m[a<0?1:2])} in the safety chain model. Known: ${ord.join(", ")}.`,[["Show safety chain","safety chain"]]];
+  const [x,y]=a<b?[a,b]:[b,a],idx=t=>{t=t.split(/\s|→|\(/)[0].trim().toLowerCase();return ord.indexOf(t)};
+  let on=false,out=[];D.chain_model.forEach(s=>{const i=idx(s.t_in),o=idx(s.t_out);if(i>=0&&i>=y)on=false;if(i>=0&&i>=x&&i<y)on=true;if(on)out.push(s);if(o>=0&&o>=y)on=false});
+  const list=out.filter(s=>s.id!="END");
+  return [`<h3>Between terminal ${ord[x]} and ${ord[y]}</h3>${list.length?`<ol>${list.map(s=>`<li><span class=k>${e(s.device)}</span> – ${e(s.desc)} <span class=ref>[${e(s.location)}]</span></li>`).join("")}</ol>`:"Nothing found."}<div class=cv>⚠ Series order from sheet 7B/32A (light-curtain variant); car-door versions differ after 6.</div><div class=ref>📄 Sheet 7B (PDF p11), 32A (PDF p65)</div>`,[["Meter it out","meter it out"],["Show safety chain","safety chain"]]]}
+ // IS input
+ m=q.match(/\bis\s?([1-8])\b/);
+ if(m){const n=+m[1],io=D.io.find(x=>x.terminal.includes("IS"+n)),segs=D.chain_model.filter(s=>s.monitor.startsWith("IS"+n+" "));
+  const errs=[...new Set(segs.flatMap(s=>[s.err_move,s.err_stop]).filter(x=>x!=null))];
+  const pre=D.chain_model.slice(0,D.chain_model.findIndex(s=>s.monitor.startsWith("IS"+n+" ")));
+  return [`<h3>IS${n} ${/off|0|missing|lost|out|open/.test(q)?"off / open":""}</h3>${io?ioHTML(io):""}
+  ${segs.length?`<div class=h>Contacts that feed IS${n} (open here = IS${n} off)</div><ol>${segs.map(s=>`<li><span class=k>${e(s.device)}</span> – ${e(s.desc)} <span class=ref>[${e(s.location)}] ${e(s.t_in)}→${e(s.t_out)}</span></li>`).join("")}</ol>`:""}
+  ${pre.length?`<div class=ref>If IS${n} is off but earlier inputs (${[...new Set(pre.map(s=>s.monitor.split(" ")[0]))].join(", ")}) are on, the break is in the list above.</div>`:""}
+  ${errs.length?`<div class=h>Related errors</div>${errs.map(c=>"E "+pad(c)+" "+FX(c).name).join("<br>")}`:`<div class=cv>⚠ No error code in the manual refers to IS${n}.</div>`}
+  <div class=cv>⚠ J3 pin mapping read from sheet 7B drawing.</div>`,[...errs.slice(0,2).map(c=>["E "+pad(c),"e"+c]),["Meter it out","meter it out"],["Show safety chain","safety chain"]]]}
+ if(/safety (chain|circuit|line|series)|safety contacts|\bsic\b/.test(q)&&!/open|broken|won'?t|fault|trip/.test(q))return [chainHTML(),[["Meter it out","meter it out"],["Reset steps","reset steps"],["What's between 2 and 3","between 2 and 3"]]];
+ // error code
+ m=q.match(/\b(?:e|err|error|code|fault)\s*[-#:]?\s*0?(\d{1,2})\b/)||q.match(/^0?(\d{1,2})$/);
+ if(m){const c=+m[1],f=FX(c);if(f){const near=[c-1,c+1].filter(FX);return [faultHTML(f),[["Reset steps","reset steps"],...(D.chain_model.some(s=>s.err_move==c||s.err_stop==c)?[["Meter it out","meter it out"]]:[]),...near.map(n=>["E "+pad(n),"e"+n])]]}
+  return [`The manual lists codes E 00–E 31 only; there's no E ${e(m[1])}. I won't guess.`,[["List all faults","__browse_faults"]]]}
+ // parameters
+ m=q.match(/\b(mp|np|pp|f|t|m)\s*>?\s*0?(\d{1,2})\b/);
+ if(m&&!/fuse|blow|blown|2a|amp/.test(q)){const p=D.params.find(p=>p.menu.toLowerCase()==m[1]&&p.num==+m[2]);
+  if(p){const alt=m[1]=="f"&&+m[2]<=8?[["Fuse F"+m[2],"fuse f"+m[2]]]:[];return [parHTML(p),[...alt,["Next "+p.menu+pad(p.num+1),m[1]+(+m[2]+1)]]]}}
+ const mm=q.match(/\b(mem|rst|sts|chc|chp|dem)\s*0?(\d)?/);if(mm){const ps=D.params.filter(p=>p.menu=="Other"&&p.num.toLowerCase().startsWith(mm[1]));if(ps.length)return [ps.map(parHTML).join("<hr>"),mm[1]=="rst"?[["Reset steps","reset steps"]]:[]]}
+ // terminals/io
+ let words=q.replace(/fuse/,"").trim().split(/\s+/);let hits=[];
+ for(let i=0;i<words.length;i++){for(const w of [words[i]+(words[i+1]||""),words[i]+" "+(words[i+1]||""),words[i]]){const h=ioFind(w);if(h.length){hits.push(...h);break}}}
+ const tm=q.match(/\bj\s?(\d{1,2})\s*[, ]\s*(\d{1,2})\b/);if(tm){const t=`J${tm[1]},${tm[2]}`;hits.push(...D.io.filter(x=>x.terminal.toUpperCase().startsWith(t)))}
+ const im=q.match(/\b(in|out)\s?(\d{1,2})\b/);if(im){const t=(im[1]+pad(im[2])).toUpperCase();hits.push(...D.io.filter(x=>x.terminal.toUpperCase().includes(t)))}
+ const km=q.match(/\bk\s?(\d{1,2})\b/);if(km)hits.push(...D.io.filter(x=>x.terminal.toUpperCase().split(" ")[0]=="K"+km[1]));
+ ["apa","apb","cp","ax","bkd","bat","lc","pnet","9fs"].forEach(r=>{if(new RegExp("\\b"+r+"\\b").test(q))hits.push(...D.io.filter(x=>x.terminal.toLowerCase().split(/[ /]/).includes(r)))});
+ // chain device names
+ const segHit=D.chain_model.filter(s=>s.id!="END"&&s.id!="FC_IS4"&&new RegExp("\\b"+s.id.toLowerCase()+"\\b").test(q));
+ hits=[...new Set(hits)];
+ const sc=score(q);
+ const ranked=Object.entries(sc.f).sort((a,b)=>b[1]-a[1]);
+ const strongSym=ranked.length&&ranked[0][1]>=1.5;
+ if(segHit.length&&!strongSym||segHit.length==1&&/what|where|which/.test(q)){return [segHit.map(segHTML).join("<hr>"),[...segHit.flatMap(s=>[s.err_stop,s.err_move]).filter(x=>x!=null).slice(0,2).map(c=>["E "+pad(c),"e"+c]),["Meter it out","meter it out"]]]}
+ if(hits.length&&!strongSym){const extra=hits.flatMap(h=>D.chain_model.filter(s=>h.terminal.includes(s.monitor.split(" ")[0])&&/^IS/.test(s.monitor)).slice(0,0));
+  return [hits.slice(0,4).map(ioHTML).join("<hr>"),hits.some(h=>/IS\d/.test(h.terminal))?[["Show safety chain","safety chain"]]:[["Show safety chain","safety chain"],["Reset steps","reset steps"]]]}
+ if(strongSym||sc.chain>=2){const top=ranked.slice(0,3).map(([c])=>FX(+c));
+  let h=`<h3>Most likely</h3>`;
+  if(sc.chain>=1)h+=`<div>This sounds like a <b>safety chain</b> problem. Read 'sic:' on the programmer (first 0 bit = open section) and the E menu (last error).</div>`;
+  const segs=Object.keys(sc.seg).map(id=>D.chain_model.find(s=>s.id==id)).filter(Boolean);
+  if(top[0])h+=`<div class=h>Best match</div>`+faultHTML(top[0]);
+  if(segs.length)h+=`<div class=h>Contacts to check</div><ul>${segs.map(s=>`<li><span class=k>${e(s.device)}</span> – ${e(s.desc)} <span class=ref>[${e(s.location)}] ${e(s.t_in)}→${e(s.t_out)}, ${e(s.monitor)}</span></li>`).join("")}</ul>`;
+  const io=Object.keys(sc.io).map(t=>D.io.find(x=>x.terminal==t)).filter(Boolean);if(io.length)h+=`<div class=h>Related</div>`+io.map(ioHTML).join("<hr>");
+  const ps=Object.keys(sc.p).map(k=>D.params.find(p=>p.menu+pad(p.num)==k.replace(/(\d+)/,x=>pad(x)))).filter(Boolean);if(ps.length)h+=ps.map(parHTML).join("<hr>");
+  h+=`<div class=cv>⚠ Matched on keywords – confirm with the E menu (last error code) on the programmer.</div>`;
+  const ch=top.slice(1).map(f=>[`E ${pad(f.code)} ${f.name.replace(/^ERR[_-]/,"")}`,"e"+f.code]);
+  if(sc.chain>=1)ch.unshift(["Meter it out","meter it out"]);ch.push(["Reset steps","reset steps"]);
+  return [h,ch]}
+ const ps=Object.keys(sc.p).map(k=>D.params.find(p=>p.menu+pad(p.num)==k.replace(/(\d+)/,x=>pad(x)))).filter(Boolean);if(ps.length)return [ps.map(parHTML).join("<hr>"),[]];
+ // full-text fallback with weak hits
+ const tk=q.split(/[^a-z0-9]+/).filter(t=>t.length>2);
+ const weak=[...D.params.filter(p=>tk.some(t=>p.desc.toLowerCase().includes(t))).slice(0,3).map(p=>[p.menu+" "+(typeof p.num=="number"?pad(p.num):p.num),p.menu+p.num]),...ranked.slice(0,2).map(([c])=>["E "+pad(c),"e"+c])];
+ return [`<h3>Not sure</h3>I couldn't match that confidently to anything in the ED1 manual or HLB schematic, so I won't guess. Try an error code from the E menu (e.g. "E 14"), an input ("IS3 off"), a terminal ("J3,5"), a parameter ("F06") or a symptom ("doors won't close").`,[...weak.slice(0,3),["Safety chain","safety chain"],["Help","help"]]]}
+const HELP=`<h3>G'day – ED1 / HLB fault bot</h3>Type what you're seeing. Examples:<ul><li>"E 14" or "err 5" – error code from the E menu</li><li>"lift won't move, door open light on"</li><li>"IS3 off" / "safety chain open" / "meter it out"</li><li>"what's between terminal 2 and 3"</li><li>"what is F06", "J3,5", "K9", "F5 fuse"</li></ul><div class=ref>Works offline. Sources: ED1 manual E-DOC-00000035 Rev01.4, HLB schematic E-SCH-00000015 Rev08.</div>`;
+const STARTCH=[["Lift won't move","lift won't move"],["Safety chain open","safety chain open"],["Meter it out","meter it out"],["E 14","e14"],["Doors won't close","doors won't close"],["Reset steps","reset steps"]];
+function ask(q,label){if(q.startsWith("__browse_")){openMenu(q.slice(9));return}
+ bub(e(label||q),true);const [h,c]=answer(q);bub(h);chips(c)}
+$("#f").onsubmit=ev=>{ev.preventDefault();const v=$("#q").value.trim();if(!v)return;$("#q").value="";ask(v)};
+$("#clr").onclick=()=>{log.innerHTML="";M=null;bub(HELP);chips(STARTCH)};
+// ---------- browse ----------
+const T=[["faults","Faults"],["chain_model","Safety chain"],["io","I/O"],["params","Params"],["diagnostics","Diag"],["pages","Pages"],["tips","Tips"]];
+const BR={faults:f=>`<details><summary><b>E ${pad(f.code)}</b> ${e(f.name)}</summary>${faultHTML(f)}</details>`,chain_model:segHTML,io:ioHTML,params:parHTML,diagnostics:x=>`<span class=k>${e(x.screen)}</span> ${e(x.desc)}`,pages:x=>`<span class=k>PDF p${x.pdf_page}</span> ${x.sheet?"· sheet "+e(x.sheet):""}<div>${e(x.title)}</div>`,tips:x=>e(x)};
+function openMenu(k){k=k||"faults";$("#menu").classList.add("on");$("#mnav").innerHTML=T.map(([a,l])=>`<button class=ib data-k=${a} style="${a==k?"background:var(--acc);color:#fff":""}">${l}</button>`).join("");$("#mout").innerHTML=D[k].map(x=>`<div class=c>${BR[k](x)}</div>`).join("")}
+$("#mnav").onclick=ev=>{if(ev.target.dataset.k)openMenu(ev.target.dataset.k)};$("#mbtn").onclick=()=>openMenu();$("#mclose").onclick=()=>$("#menu").classList.remove("on");
+bub(HELP);chips(STARTCH);
+</script></body></html>
