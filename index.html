@@ -3,7 +3,7 @@
 :root{--bg:#f2f3f5;--fg:#111;--card:#fff;--mut:#667;--acc:#0a6cff;--bd:#dde;--me:#0a6cff;--warn:#b26a00;--note:#7a3fbf}
 @media(prefers-color-scheme:dark){:root{--bg:#0e1013;--fg:#eee;--card:#1b1e24;--mut:#9aa3ad;--acc:#4da3ff;--bd:#2c3038;--me:#1f5fd1;--warn:#e0a040;--note:#b58cf0}}
 *{box-sizing:border-box}html,body{height:100%}body{margin:0;font:16px/1.45 system-ui,sans-serif;background:var(--bg);color:var(--fg);display:flex;flex-direction:column}
-header{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--bd)}header h1{font-size:17px;margin:0;flex:1}
+header{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--bd)}header h1{font-size:16px;margin:0;flex:1;white-space:nowrap}
 .ib{min-width:44px;min-height:44px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);font-size:15px;padding:0 10px}
 #log{flex:1;overflow-y:auto;padding:12px}.b{max-width:92%;padding:10px 12px;border-radius:14px;margin:6px 0;background:var(--card);border:1px solid var(--bd)}
 .me{margin-left:auto;background:var(--me);color:#fff;border:0}.b h3{margin:0 0 4px;font-size:16px}.b ol,.b ul{padding-left:20px;margin:4px 0}.b li{margin:3px 0}
@@ -16,7 +16,7 @@ table{border-collapse:collapse;width:100%;font-size:14px}td{border-bottom:1px so
 #menu{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;z-index:9}#menu.on{display:flex}#mnav{display:flex;gap:6px;overflow-x:auto;padding:8px 12px}
 #mout{flex:1;overflow-y:auto;padding:0 12px 30px}.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px;margin:8px 0}
 </style></head><body>
-<header><h1>⚡ ED1 HLB Fault Bot</h1><button class=ib id=mbtn>☰ Browse</button><button class=ib id=clr title="Clear">↺</button></header>
+<header><h1>⚡ HLB Bot</h1><select class=ib id=lt aria-label="Lift type"><option value=sliding>Sliding car doors</option><option value=none>No car doors</option></select><button class=ib id=mbtn>☰ Browse</button><button class=ib id=clr title="Clear">↺</button></header>
 <div id=log></div>
 <form id=f><input id=q placeholder="Describe the fault… e.g. E 05, won't move" autocomplete=off enterkeyhint=send><button id=send>Send</button></form>
 <div id=menu><header><h1>Browse</h1><button class=ib id=mclose>✕ Chat</button></header><div id=mnav></div><div id=mout></div></div>
@@ -2196,28 +2196,28 @@ const D={
   {
    "id": "F5",
    "device": "F5 2A fuse",
-   "desc": "Safety circuit fuse, J12,3 +24 \u2192 terminal 1 (safety line beginning)",
-   "location": "Controller (ED1 card, car-top MC box)",
+   "desc": "Safety circuit fuse, J12,3 +24 \u2192 terminal 1",
+   "location": "Controller (ED1, car-top MC box)",
    "t_in": "J12,3 (+24)",
    "t_out": "1",
    "monitor": "IS1 (J3,2)",
    "err_move": 7,
    "err_stop": 13,
    "inferred": "",
-   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   },
   {
    "id": "AME",
    "device": "AME",
    "desc": "Key switch enabling emergency button",
-   "location": "Emergency box (controller/landing)",
+   "location": "Emergency box",
    "t_in": "1",
    "t_out": "\u2014",
    "monitor": "IS2 (J3,3)",
    "err_move": 8,
    "err_stop": 14,
-   "inferred": "Location from legend + sheet 5A; series via 1A/MV1",
-   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   "inferred": "",
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   },
   {
    "id": "SAF",
@@ -2230,7 +2230,7 @@ const D={
    "err_move": 8,
    "err_stop": 14,
    "inferred": "",
-   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   },
   {
    "id": "STF",
@@ -2243,7 +2243,7 @@ const D={
    "err_move": 8,
    "err_stop": 14,
    "inferred": "",
-   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   },
   {
    "id": "SPU",
@@ -2256,33 +2256,33 @@ const D={
    "err_move": 8,
    "err_stop": 14,
    "inferred": "",
-   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   },
   {
    "id": "SLM",
    "device": "SLM",
    "desc": "Speed governor safety switch",
-   "location": "Shaft (governor; on shaft devices line sheet 24)",
+   "location": "Shaft (governor)",
    "t_in": "\u2014",
    "t_out": "1/1",
-   "monitor": "IS2 (J3,3) \u2013 also J2 IN02 (S2) taps 1/1",
+   "monitor": "IS2 (J3,3); S2 = J2 IN02 taps 1/1",
    "err_move": 8,
    "err_stop": 14,
-   "inferred": "Exact governor location not stated",
-   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   "inferred": "Governor location not stated",
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   },
   {
    "id": "STLM",
    "device": "STLM",
    "desc": "Governor rope tension switch",
-   "location": "Pit/shaft (governor rope)",
+   "location": "Pit/shaft",
    "t_in": "1/1",
    "t_out": "2",
    "monitor": "IS2 (J3,3)",
    "err_move": 8,
    "err_stop": 14,
-   "inferred": "Location inferred from function",
-   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   "inferred": "Location inferred",
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   },
   {
    "id": "SPM",
@@ -2295,7 +2295,7 @@ const D={
    "err_move": 9,
    "err_stop": 15,
    "inferred": "",
-   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   },
   {
    "id": "PM",
@@ -2308,124 +2308,150 @@ const D={
    "err_move": 9,
    "err_stop": 15,
    "inferred": "",
-   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   },
   {
    "id": "SBO",
    "device": "SBO",
    "desc": "Car hatch contact (13/14)",
-   "location": "Car (roof hatch)",
-   "t_in": "\u2014",
-   "t_out": "\u2014",
-   "monitor": "IS3 (J3,4)",
-   "err_move": 9,
-   "err_stop": 15,
-   "inferred": "",
-   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
-  },
-  {
-   "id": "STP",
-   "device": "STP",
-   "desc": "Stop in the car",
-   "location": "Car (COP)",
+   "location": "Car roof hatch",
    "t_in": "\u2014",
    "t_out": "2/1",
    "monitor": "IS3 (J3,4)",
    "err_move": 9,
    "err_stop": 15,
    "inferred": "",
-   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   },
   {
-   "id": "SEC",
-   "device": "SEC",
-   "desc": "Over-travel safety contact",
-   "location": "Shaft (top/bottom limit)",
+   "id": "STP",
+   "device": "STP",
+   "desc": "Stop in the car",
+   "location": "Car (COP)",
    "t_in": "2/1",
    "t_out": "2/2",
    "monitor": "IS3 (J3,4)",
    "err_move": 9,
    "err_stop": 15,
-   "inferred": "Location inferred from function",
-   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   "inferred": "Sheet 32D lists STP at 2/1\u21922/2, but the 7D drawing shows no STP and the legend says STP is 'only without cabin doors' \u2013 may be absent/linked on sliding-door lifts",
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+  },
+  {
+   "id": "SEC",
+   "device": "SEC",
+   "desc": "Over-travel safety contact",
+   "location": "Shaft",
+   "t_in": "2/2",
+   "t_out": "2/3",
+   "monitor": "IS3 (J3,4)",
+   "err_move": 9,
+   "err_stop": 15,
+   "inferred": "Location inferred",
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   },
   {
    "id": "SAR",
    "device": "SAR",
    "desc": "Safety gear switch in car frame",
    "location": "Car frame",
-   "t_in": "2/2",
-   "t_out": "2/3 \u2192 3",
+   "t_in": "2/3",
+   "t_out": "3",
    "monitor": "IS3 (J3,4)",
    "err_move": 9,
    "err_stop": 15,
    "inferred": "",
-   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   },
   {
-   "id": "FC_IS4",
-   "device": "FC 11/14 (light curtain relay) / CM, CM1",
-   "desc": "Light-curtain relay contact (7B) or mechanical door closing protection (sic display)",
-   "location": "Car / car door",
+   "id": "VF5A",
+   "device": "VF5+ side A",
+   "desc": "Door mainboard (Fermator) VF5+ contact, side A \u2013 car door operator OK/closed",
+   "location": "Car door operator (side A)",
    "t_in": "3",
-   "t_out": "J3,5",
-   "monitor": "IS4 (J3,5)",
+   "t_out": "3/1",
+   "monitor": "IS4 (J3,5) branch",
    "err_move": null,
    "err_stop": null,
-   "inferred": "IS4 has no error code in manual; branch varies by door type (sheets 32A-D)",
-   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   "inferred": "Branch off terminal 3, not in main series to 9FS. No error code references IS4; meaning of VF5+ only 'contact in the electronic card of the Fermator sliding doors' (manual p18)",
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+  },
+  {
+   "id": "VF5B",
+   "device": "VF5+ side B",
+   "desc": "Door mainboard VF5+ contact, side B (double entrance)",
+   "location": "Car door operator (side B)",
+   "t_in": "3/1",
+   "t_out": "4",
+   "monitor": "IS4 (J3,5) branch",
+   "err_move": null,
+   "err_stop": null,
+   "inferred": "Single entrance: 3/1 presumably linked to 4 (inferred)",
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   },
   {
    "id": "SAC",
    "device": "SAC",
-   "desc": "Landing door CLOSED contacts (all floors in series)",
+   "desc": "Landing door CLOSED contacts (all floors)",
    "location": "Landing doors",
-   "t_in": "3 (via 3A/MV3)",
+   "t_in": "3",
    "t_out": "5",
    "monitor": "IS5 (J3,6)",
    "err_move": 10,
    "err_stop": null,
-   "inferred": "",
-   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   "inferred": "7D drawing shows a link 3\u21925 across the top; on automatic sliding landing doors SAC may be bridged (inferred \u2013 check on site)",
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   },
   {
    "id": "SCA",
    "device": "SCA",
    "desc": "Landing door LOCKED contacts (all floors in series)",
    "location": "Landing doors",
-   "t_in": "5 (via 4A/MV5)",
+   "t_in": "5",
    "t_out": "6",
    "monitor": "IS6 (J3,7)",
    "err_move": 11,
    "err_stop": null,
    "inferred": "",
-   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   },
   {
-   "id": "FT",
-   "device": "FT / PC / FC 21/24",
-   "desc": "Car door contacts PC/PC1 or light curtain FT/FT1 (via relay FC)",
-   "location": "Car door / entrance",
-   "t_in": "6 (via 5A/MV6)",
-   "t_out": "6/1 \u2192 9 / 9FS",
-   "monitor": "IS7 (J3,8); IS8 (J3,9) shown same node",
+   "id": "PC",
+   "device": "PC",
+   "desc": "Car door safety contact side A",
+   "location": "Car door A",
+   "t_in": "6",
+   "t_out": "6/1",
+   "monitor": "IS7 (J3,8)",
    "err_move": 12,
    "err_stop": null,
-   "inferred": "7B: 6\u2192FC 21/24\u2192J3,8. Car-door versions (7C/7D, 32C/D): 6\u2192PC\u21926/1\u2192PC1\u21929",
-   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   "inferred": "",
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+  },
+  {
+   "id": "PC1",
+   "device": "PC1",
+   "desc": "Car door safety contact side B (link if single entrance)",
+   "location": "Car door B",
+   "t_in": "6/1",
+   "t_out": "9",
+   "monitor": "IS7 (J3,8)",
+   "err_move": 12,
+   "err_stop": null,
+   "inferred": "Single-entrance link inferred",
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   },
   {
    "id": "END",
    "device": "Safety line end 9FS",
-   "desc": "J4 \u2192 up/down contactors S/D via K1/K2; 9FS to drive",
+   "desc": "9 \u2192 J4 \u2192 up/down contactors S/D via K1/K2; 9FS to drive",
    "location": "Controller/converter",
    "t_in": "9",
    "t_out": "9FS",
-   "monitor": "Drive shows PrA (open) / 0.0 (closed)",
+   "monitor": "Drive PrA (open) / 0.0 (closed)",
    "err_move": null,
    "err_stop": null,
    "inferred": "",
-   "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
   }
  ],
  "monitor_points": [
@@ -2489,7 +2515,642 @@ const D={
   "J3 pin \u2194 IS mapping read from sheet 7B drawing (J3,2=IS1 \u2026 J3,9=IS8).",
   "Sheet 7B is the light-curtain/no-car-door variant; 7C (car door + swing landing doors) and 7D (automatic sliding doors) differ after terminal 6.",
   "IS4 not referenced by any error code."
- ]
+ ],
+ "chains": {
+  "sliding": [
+   {
+    "id": "F5",
+    "device": "F5 2A fuse",
+    "desc": "Safety circuit fuse, J12,3 +24 \u2192 terminal 1",
+    "location": "Controller (ED1, car-top MC box)",
+    "t_in": "J12,3 (+24)",
+    "t_out": "1",
+    "monitor": "IS1 (J3,2)",
+    "err_move": 7,
+    "err_stop": 13,
+    "inferred": "",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "AME",
+    "device": "AME",
+    "desc": "Key switch enabling emergency button",
+    "location": "Emergency box",
+    "t_in": "1",
+    "t_out": "\u2014",
+    "monitor": "IS2 (J3,3)",
+    "err_move": 8,
+    "err_stop": 14,
+    "inferred": "",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "SAF",
+    "device": "SAF",
+    "desc": "Pit entry safety",
+    "location": "Pit",
+    "t_in": "\u2014",
+    "t_out": "\u2014",
+    "monitor": "IS2 (J3,3)",
+    "err_move": 8,
+    "err_stop": 14,
+    "inferred": "",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "STF",
+    "device": "STF",
+    "desc": "Pit stop switch",
+    "location": "Pit",
+    "t_in": "\u2014",
+    "t_out": "\u2014",
+    "monitor": "IS2 (J3,3)",
+    "err_move": 8,
+    "err_stop": 14,
+    "inferred": "",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "SPU",
+    "device": "SPU",
+    "desc": "Pit prop / blocking device",
+    "location": "Pit",
+    "t_in": "\u2014",
+    "t_out": "\u2014",
+    "monitor": "IS2 (J3,3)",
+    "err_move": 8,
+    "err_stop": 14,
+    "inferred": "",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "SLM",
+    "device": "SLM",
+    "desc": "Speed governor safety switch",
+    "location": "Shaft (governor)",
+    "t_in": "\u2014",
+    "t_out": "1/1",
+    "monitor": "IS2 (J3,3); S2 = J2 IN02 taps 1/1",
+    "err_move": 8,
+    "err_stop": 14,
+    "inferred": "Governor location not stated",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "STLM",
+    "device": "STLM",
+    "desc": "Governor rope tension switch",
+    "location": "Pit/shaft",
+    "t_in": "1/1",
+    "t_out": "2",
+    "monitor": "IS2 (J3,3)",
+    "err_move": 8,
+    "err_stop": 14,
+    "inferred": "Location inferred",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "SPM",
+    "device": "SPM",
+    "desc": "Stop on maintenance push-button box",
+    "location": "Car top",
+    "t_in": "2",
+    "t_out": "\u2014",
+    "monitor": "IS3 (J3,4)",
+    "err_move": 9,
+    "err_stop": 15,
+    "inferred": "",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "PM",
+    "device": "PM",
+    "desc": "Maintenance (inspection) turn switch",
+    "location": "Car top",
+    "t_in": "\u2014",
+    "t_out": "\u2014",
+    "monitor": "IS3 (J3,4)",
+    "err_move": 9,
+    "err_stop": 15,
+    "inferred": "",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "SBO",
+    "device": "SBO",
+    "desc": "Car hatch contact (13/14)",
+    "location": "Car roof hatch",
+    "t_in": "\u2014",
+    "t_out": "2/1",
+    "monitor": "IS3 (J3,4)",
+    "err_move": 9,
+    "err_stop": 15,
+    "inferred": "",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "STP",
+    "device": "STP",
+    "desc": "Stop in the car",
+    "location": "Car (COP)",
+    "t_in": "2/1",
+    "t_out": "2/2",
+    "monitor": "IS3 (J3,4)",
+    "err_move": 9,
+    "err_stop": 15,
+    "inferred": "Sheet 32D lists STP at 2/1\u21922/2, but the 7D drawing shows no STP and the legend says STP is 'only without cabin doors' \u2013 may be absent/linked on sliding-door lifts",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "SEC",
+    "device": "SEC",
+    "desc": "Over-travel safety contact",
+    "location": "Shaft",
+    "t_in": "2/2",
+    "t_out": "2/3",
+    "monitor": "IS3 (J3,4)",
+    "err_move": 9,
+    "err_stop": 15,
+    "inferred": "Location inferred",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "SAR",
+    "device": "SAR",
+    "desc": "Safety gear switch in car frame",
+    "location": "Car frame",
+    "t_in": "2/3",
+    "t_out": "3",
+    "monitor": "IS3 (J3,4)",
+    "err_move": 9,
+    "err_stop": 15,
+    "inferred": "",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "VF5A",
+    "device": "VF5+ side A",
+    "desc": "Door mainboard (Fermator) VF5+ contact, side A \u2013 car door operator OK/closed",
+    "location": "Car door operator (side A)",
+    "t_in": "3",
+    "t_out": "3/1",
+    "monitor": "IS4 (J3,5) branch",
+    "err_move": null,
+    "err_stop": null,
+    "inferred": "Branch off terminal 3, not in main series to 9FS. No error code references IS4; meaning of VF5+ only 'contact in the electronic card of the Fermator sliding doors' (manual p18)",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "VF5B",
+    "device": "VF5+ side B",
+    "desc": "Door mainboard VF5+ contact, side B (double entrance)",
+    "location": "Car door operator (side B)",
+    "t_in": "3/1",
+    "t_out": "4",
+    "monitor": "IS4 (J3,5) branch",
+    "err_move": null,
+    "err_stop": null,
+    "inferred": "Single entrance: 3/1 presumably linked to 4 (inferred)",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "SAC",
+    "device": "SAC",
+    "desc": "Landing door CLOSED contacts (all floors)",
+    "location": "Landing doors",
+    "t_in": "3",
+    "t_out": "5",
+    "monitor": "IS5 (J3,6)",
+    "err_move": 10,
+    "err_stop": null,
+    "inferred": "7D drawing shows a link 3\u21925 across the top; on automatic sliding landing doors SAC may be bridged (inferred \u2013 check on site)",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "SCA",
+    "device": "SCA",
+    "desc": "Landing door LOCKED contacts (all floors in series)",
+    "location": "Landing doors",
+    "t_in": "5",
+    "t_out": "6",
+    "monitor": "IS6 (J3,7)",
+    "err_move": 11,
+    "err_stop": null,
+    "inferred": "",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "PC",
+    "device": "PC",
+    "desc": "Car door safety contact side A",
+    "location": "Car door A",
+    "t_in": "6",
+    "t_out": "6/1",
+    "monitor": "IS7 (J3,8)",
+    "err_move": 12,
+    "err_stop": null,
+    "inferred": "",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "PC1",
+    "device": "PC1",
+    "desc": "Car door safety contact side B (link if single entrance)",
+    "location": "Car door B",
+    "t_in": "6/1",
+    "t_out": "9",
+    "monitor": "IS7 (J3,8)",
+    "err_move": 12,
+    "err_stop": null,
+    "inferred": "Single-entrance link inferred",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   },
+   {
+    "id": "END",
+    "device": "Safety line end 9FS",
+    "desc": "9 \u2192 J4 \u2192 up/down contactors S/D via K1/K2; 9FS to drive",
+    "location": "Controller/converter",
+    "t_in": "9",
+    "t_out": "9FS",
+    "monitor": "Drive PrA (open) / 0.0 (closed)",
+    "err_move": null,
+    "err_stop": null,
+    "inferred": "",
+    "ref": "Sheet 7D (PDF p13) + 32D (PDF p68)"
+   }
+  ],
+  "none": [
+   {
+    "id": "F5",
+    "device": "F5 2A fuse",
+    "desc": "Safety circuit fuse, J12,3 +24 \u2192 terminal 1",
+    "location": "Controller (ED1, car-top MC box)",
+    "t_in": "J12,3 (+24)",
+    "t_out": "1",
+    "monitor": "IS1 (J3,2)",
+    "err_move": 7,
+    "err_stop": 13,
+    "inferred": "",
+    "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   },
+   {
+    "id": "AME",
+    "device": "AME",
+    "desc": "Key switch enabling emergency button",
+    "location": "Emergency box",
+    "t_in": "1",
+    "t_out": "\u2014",
+    "monitor": "IS2 (J3,3)",
+    "err_move": 8,
+    "err_stop": 14,
+    "inferred": "",
+    "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   },
+   {
+    "id": "SAF",
+    "device": "SAF",
+    "desc": "Pit entry safety",
+    "location": "Pit",
+    "t_in": "\u2014",
+    "t_out": "\u2014",
+    "monitor": "IS2 (J3,3)",
+    "err_move": 8,
+    "err_stop": 14,
+    "inferred": "",
+    "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   },
+   {
+    "id": "STF",
+    "device": "STF",
+    "desc": "Pit stop switch",
+    "location": "Pit",
+    "t_in": "\u2014",
+    "t_out": "\u2014",
+    "monitor": "IS2 (J3,3)",
+    "err_move": 8,
+    "err_stop": 14,
+    "inferred": "",
+    "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   },
+   {
+    "id": "SPU",
+    "device": "SPU",
+    "desc": "Pit prop / blocking device",
+    "location": "Pit",
+    "t_in": "\u2014",
+    "t_out": "\u2014",
+    "monitor": "IS2 (J3,3)",
+    "err_move": 8,
+    "err_stop": 14,
+    "inferred": "",
+    "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   },
+   {
+    "id": "SLM",
+    "device": "SLM",
+    "desc": "Speed governor safety switch",
+    "location": "Shaft (governor)",
+    "t_in": "\u2014",
+    "t_out": "1/1",
+    "monitor": "IS2 (J3,3); S2 = J2 IN02 taps 1/1",
+    "err_move": 8,
+    "err_stop": 14,
+    "inferred": "Governor location not stated",
+    "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   },
+   {
+    "id": "STLM",
+    "device": "STLM",
+    "desc": "Governor rope tension switch",
+    "location": "Pit/shaft",
+    "t_in": "1/1",
+    "t_out": "2",
+    "monitor": "IS2 (J3,3)",
+    "err_move": 8,
+    "err_stop": 14,
+    "inferred": "Location inferred",
+    "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   },
+   {
+    "id": "SPM",
+    "device": "SPM",
+    "desc": "Stop on maintenance push-button box",
+    "location": "Car top",
+    "t_in": "2",
+    "t_out": "\u2014",
+    "monitor": "IS3 (J3,4)",
+    "err_move": 9,
+    "err_stop": 15,
+    "inferred": "",
+    "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   },
+   {
+    "id": "PM",
+    "device": "PM",
+    "desc": "Maintenance (inspection) turn switch",
+    "location": "Car top",
+    "t_in": "\u2014",
+    "t_out": "\u2014",
+    "monitor": "IS3 (J3,4)",
+    "err_move": 9,
+    "err_stop": 15,
+    "inferred": "",
+    "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   },
+   {
+    "id": "SBO",
+    "device": "SBO",
+    "desc": "Car hatch contact (13/14)",
+    "location": "Car roof hatch",
+    "t_in": "\u2014",
+    "t_out": "2/1",
+    "monitor": "IS3 (J3,4)",
+    "err_move": 9,
+    "err_stop": 15,
+    "inferred": "",
+    "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   },
+   {
+    "id": "STP",
+    "device": "STP",
+    "desc": "Stop in the car",
+    "location": "Car (COP)",
+    "t_in": "2/1",
+    "t_out": "2/2",
+    "monitor": "IS3 (J3,4)",
+    "err_move": 9,
+    "err_stop": 15,
+    "inferred": "",
+    "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   },
+   {
+    "id": "SEC",
+    "device": "SEC",
+    "desc": "Over-travel safety contact",
+    "location": "Shaft",
+    "t_in": "2/2",
+    "t_out": "2/3",
+    "monitor": "IS3 (J3,4)",
+    "err_move": 9,
+    "err_stop": 15,
+    "inferred": "Location inferred",
+    "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   },
+   {
+    "id": "SAR",
+    "device": "SAR",
+    "desc": "Safety gear switch in car frame",
+    "location": "Car frame",
+    "t_in": "2/3",
+    "t_out": "3",
+    "monitor": "IS3 (J3,4)",
+    "err_move": 9,
+    "err_stop": 15,
+    "inferred": "",
+    "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   },
+   {
+    "id": "FC_IS4",
+    "device": "FC 11/14 light-curtain relay",
+    "desc": "Light curtain relay contact",
+    "location": "Car entrance",
+    "t_in": "3",
+    "t_out": "J3,5",
+    "monitor": "IS4 (J3,5) branch",
+    "err_move": null,
+    "err_stop": null,
+    "inferred": "No error code references IS4",
+    "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   },
+   {
+    "id": "SAC",
+    "device": "SAC",
+    "desc": "Landing door CLOSED contacts",
+    "location": "Landing doors",
+    "t_in": "3",
+    "t_out": "5",
+    "monitor": "IS5 (J3,6)",
+    "err_move": 10,
+    "err_stop": null,
+    "inferred": "",
+    "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   },
+   {
+    "id": "SCA",
+    "device": "SCA",
+    "desc": "Landing door LOCKED contacts",
+    "location": "Landing doors",
+    "t_in": "5",
+    "t_out": "6",
+    "monitor": "IS6 (J3,7)",
+    "err_move": 11,
+    "err_stop": null,
+    "inferred": "",
+    "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   },
+   {
+    "id": "FT",
+    "device": "FT / FT1 via FC 21/24",
+    "desc": "Light curtain (FC relay) at car entrance",
+    "location": "Car entrance",
+    "t_in": "6",
+    "t_out": "9",
+    "monitor": "IS7 (J3,8)",
+    "err_move": 12,
+    "err_stop": null,
+    "inferred": "",
+    "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   },
+   {
+    "id": "END",
+    "device": "Safety line end 9FS",
+    "desc": "9FS to drive",
+    "location": "Controller",
+    "t_in": "9",
+    "t_out": "9FS",
+    "monitor": "Drive PrA/0.0",
+    "err_move": null,
+    "err_stop": null,
+    "inferred": "",
+    "ref": "Sheet 7B (PDF p11) + 32A (PDF p65)"
+   }
+  ]
+ },
+ "meter": {
+  "sliding": [
+   [
+    "1",
+    "F5 2A",
+    "IS1"
+   ],
+   [
+    "1/1",
+    "AME, SAF, STF, SPU, SLM",
+    "S2 J2 IN02"
+   ],
+   [
+    "2",
+    "STLM",
+    "IS2"
+   ],
+   [
+    "2/1",
+    "SPM, PM, SBO",
+    "\u2014"
+   ],
+   [
+    "2/2",
+    "STP",
+    "\u2014"
+   ],
+   [
+    "2/3",
+    "SEC",
+    "\u2014"
+   ],
+   [
+    "3",
+    "SAR",
+    "IS3"
+   ],
+   [
+    "5",
+    "SAC landing doors closed",
+    "IS5"
+   ],
+   [
+    "6",
+    "SCA landing doors locked",
+    "IS6"
+   ],
+   [
+    "6/1",
+    "PC car door A",
+    "\u2014"
+   ],
+   [
+    "9 / 9FS",
+    "PC1 car door B",
+    "IS7"
+   ]
+  ],
+  "none": [
+   [
+    "1",
+    "F5 2A",
+    "IS1"
+   ],
+   [
+    "1/1",
+    "AME, SAF, STF, SPU, SLM",
+    "S2 J2 IN02"
+   ],
+   [
+    "2",
+    "STLM",
+    "IS2"
+   ],
+   [
+    "2/1",
+    "SPM, PM, SBO",
+    "\u2014"
+   ],
+   [
+    "2/2",
+    "STP",
+    "\u2014"
+   ],
+   [
+    "2/3",
+    "SEC",
+    "\u2014"
+   ],
+   [
+    "3",
+    "SAR",
+    "IS3"
+   ],
+   [
+    "5",
+    "SAC landing doors closed",
+    "IS5"
+   ],
+   [
+    "6",
+    "SCA landing doors locked",
+    "IS6"
+   ],
+   [
+    "9 / 9FS",
+    "light curtain FT/FC",
+    "IS7"
+   ]
+  ]
+ },
+ "door": {
+  "outputs": [
+   "K6 APA \u2013 open door side A (out1 'APA'; out0 'Open door side A')",
+   "K7 APB \u2013 open door side B",
+   "K5 CP \u2013 close door relay (out0 'Close car doors')",
+   "OUT16 lift busy / OUT17 lift at floor"
+  ],
+  "params": [
+   "F06 1 = doors stay open at floor; 0 = park doors closed",
+   "F09\u2013F18 door access per floor (0 none,1 A,2 B,3 A+B together,4 A/B selective)",
+   "T01 lift busy, T02 door open time, T03 delay door contact\u2192lock, T16 delay before lock release (K3,K4)",
+   "T00/T13 & M/MP menus: Magnetic Door (Elsa/Elettra swing landing doors) only",
+   "F29 4th close attempt (Magnetic Door only)"
+  ],
+  "sheets": [
+   "8D automatic sliding doors (PDF p17)",
+   "7D safety circuit with automatic sliding doors (PDF p13)",
+   "21E/21F Fermator 40/10 PM with photocells (PDF p39-40)",
+   "21G/21H Fermator with light curtains (PDF p41-42)",
+   "21N/21O Fermator car + swing landing doors (PDF p48-49)",
+   "32D tips \u2013 sliding doors chain (PDF p68)",
+   "20C sliding landing door lock connection (PDF p34)"
+  ]
+ }
 };
 const $=s=>document.querySelector(s),e=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const log=$("#log");
@@ -2500,7 +3161,7 @@ const pad=n=>String(n).padStart(2,"0");
 const FX=c=>D.faults.find(f=>f.code==c);
 // ---------- renderers ----------
 function faultHTML(f){const ann=f.causes.filter(c=>/^Annotation/i.test(c)),cs=f.causes.filter(c=>!/^Annotation/i.test(c));
- const segs=D.chain_model.filter(s=>s.err_move==f.code||s.err_stop==f.code);
+ const segs=CM().filter(s=>s.err_move==f.code||s.err_stop==f.code);
  return `<h3>E ${pad(f.code)} · ${e(f.name)}</h3><div>${e(f.meaning)}</div>`+
  (cs.length?`<div class=h>Likely causes</div><ul>${cs.map(c=>`<li>${e(c)}</li>`).join("")}</ul>`:"")+
  (f.checks.length?`<div class=h>Checks</div><ol>${f.checks.map(c=>`<li>${e(c)}</li>`).join("")}</ol>`:"")+
@@ -2512,10 +3173,10 @@ function segHTML(s){return `<h3>${e(s.device)}</h3><div>${e(s.desc)}</div><table
 <tr><td>Location</td><td>${e(s.location)}</td></tr><tr><td>Terminals</td><td class=k>${e(s.t_in)} → ${e(s.t_out)}</td></tr>
 <tr><td>Monitored by</td><td>${e(s.monitor)}</td></tr><tr><td>Error</td><td>${s.err_move!=null?"E "+pad(s.err_move)+" (moving)":"—"}${s.err_stop!=null?", E "+pad(s.err_stop)+" (stopped)":""}</td></tr></table>`+
  (s.inferred?`<div class=cv>⚠ Inferred: ${e(s.inferred)}</div>`:"")+`<div class=ref>📄 ${e(s.ref)}</div>`}
-function chainHTML(){return `<h3>HLB safety chain (series order)</h3><ol>${D.chain_model.map(s=>`<li><span class=k>${e(s.device)}</span> – ${e(s.desc)} <span class=ref>[${e(s.location)}] ${e(s.t_in)}→${e(s.t_out)} · ${e(s.monitor)}</span></li>`).join("")}</ol>
+function chainHTML(){return `<h3>HLB safety chain – ${TN()}</h3><ol>${CM().map(s=>`<li><span class=k>${e(s.device)}</span> – ${e(s.desc)} <span class=ref>[${e(s.location)}] ${e(s.t_in)}→${e(s.t_out)} · ${e(s.monitor)}</span></li>`).join("")}</ol>
 <div class=h>Monitor / meter points</div><table>${D.monitor_points.map(m=>`<tr><td class=k>${e(m.point)}</td><td>${e(m.input)}</td><td>after ${e(m.after)}</td></tr>`).join("")}</table>
 <div class=h>Programmer</div>ENTER from CpuCab screen → 'sic:' shows J3 bits: F5 | AME…STLM | PM…STP | CM/FT | SAC | SCA | PC/FT | / (0 = open).
-${D.chain_caveats.map(c=>`<div class=cv>⚠ ${e(c)}</div>`).join("")}<div class=ref>📄 Sheet 7B (PDF p11), 32A–D (PDF p65–68); manual p15, p18</div>`}
+${D.chain_caveats.map(c=>`<div class=cv>⚠ ${e(c)}</div>`).join("")}<div class=ref>📄 ${TYPE=='sliding'?'Sheet 7D (PDF p13), 32D (PDF p68)':'Sheet 7B (PDF p11), 32A (PDF p65)'}; manual p15, p18</div>`}
 function ioHTML(x){return `<span class=k>${e(x.terminal)}</span> — <b>${e(x.name)}</b><div>${e(x.function)}</div><div class=ref>📄 ${e(x.ref)}</div>`}
 function parHTML(p){return `<h3>${e(p.menu)} ${typeof p.num=="number"?pad(p.num):e(p.num)}</h3><div>${e(p.desc)}</div>${p.range?`<div class=ref>Range ${e(p.range)} · default ${e(p.default||"—")} ${e(p.unit)}</div>`:""}<div class=ref>📄 ${e(p.ref)}</div>
 <div class=ref>To change: ESC → menu → ENTER → UP/DOWN → ENTER; save with MEM 00>1 (manual p8-9).</div>`}
@@ -2526,14 +3187,22 @@ const RESET=`<h3>Reset steps</h3><ul>
 <li><b>Reboot ED1</b>: RST 03>1 (needed after MEM when changing F00–F02, F19).</li><li><b>E29 PTC</b>: RST 00>1 + mains OFF/ON.</li></ul>
 <div class=cv>⚠ Manual wording conflicts: error table says "RST 00 1", RST section calls it RST 00 0→1. Both mean menu RST, function 00, set value 1.</div><div class=ref>📄 Manual p10, p15–16; sheet 32A</div>`;
 // ---------- meter-out guide ----------
-const PTS=[{t:"1",after:"F5 2A fuse",inp:"IS1"},{t:"1/1",after:"AME, SAF, STF, SPU, SLM",inp:"S2 (J2 IN02)"},{t:"2",after:"STLM",inp:"IS2"},{t:"2/1",after:"SPM, PM, SBO, STP",inp:"—"},{t:"2/2",after:"SEC",inp:"—"},{t:"3",after:"SAR",inp:"IS3"},{t:"5",after:"SAC landing doors closed",inp:"IS5"},{t:"6",after:"SCA landing doors locked",inp:"IS6"},{t:"9 / 9FS",after:"car door PC / light curtain FT",inp:"IS7"}];
-let M=null;
-function meterStart(){M={lo:-1,hi:PTS.length-1};return meterStep(`<h3>Meter-out: halving the safety chain</h3><div>Meter reference: GND (terminal 1000). Expect ≈ +24 Vdc where the chain is made. Tip: first read 'sic:' on the programmer – the first 0 bit already narrows it.</div><div class=cv>⚠ Inferred procedure: points & order from sheet 7B/32A; the manual gives no metering procedure. Work safely – isolate/inspection as per your site rules.</div>`)}
-function meterStep(pre){if(M.hi-M.lo<=1){const lostAt=PTS[M.hi],prev=M.lo<0?"J12,3 (+24 supply)":"terminal "+PTS[M.lo].t;const r=(pre||"")+`<h3>✅ Open section found</h3><div>Voltage present at <b>${e(prev)}</b> but lost at <b>terminal ${e(lostAt.t)}</b>.</div><div>Suspect: <b>${e(lostAt.after)}</b>.</div><div class=ref>Check each contact in that section in turn. 📄 Sheet 7B / 32A</div>`;M=null;return [r,[["Show safety chain","safety chain"],["Reset steps","reset steps"]]]}
+let TYPE=localStorage.liftType||'sliding';const CM=()=>D.chains[TYPE];const PT=()=>D.meter[TYPE].map(([t,after,inp])=>({t,after,inp}));const TN=()=>TYPE=='sliding'?'Sliding car doors':'No car doors';
+let M=null,PTS=[];
+function meterStart(){PTS=PT();M={lo:-1,hi:PTS.length-1};return meterStep(`<h3>Meter-out: halving the safety chain (${TN()})</h3><div>Meter reference: GND (terminal 1000). Expect ≈ +24 Vdc where the chain is made. Tip: first read 'sic:' on the programmer – the first 0 bit already narrows it.</div><div class=cv>⚠ Inferred procedure: points & order from ${TYPE=='sliding'?'sheet 7D/32D':'sheet 7B/32A'}; the manual gives no metering procedure. Work safely – isolate/inspection as per your site rules.</div>`)}
+function meterStep(pre){if(M.hi-M.lo<=1){const lostAt=PTS[M.hi],prev=M.lo<0?"J12,3 (+24 supply)":"terminal "+PTS[M.lo].t;const r=(pre||"")+`<h3>✅ Open section found</h3><div>Voltage present at <b>${e(prev)}</b> but lost at <b>terminal ${e(lostAt.t)}</b>.</div><div>Suspect: <b>${e(lostAt.after)}</b>.</div><div class=ref>Check each contact in that section in turn. 📄 ${TYPE=='sliding'?'Sheet 7D / 32D':'Sheet 7B / 32A'}</div>`;M=null;return [r,[["Show safety chain","safety chain"],["Reset steps","reset steps"]]]}
  const mid=Math.floor((M.lo+M.hi+1)/2),p=PTS[mid];M.mid=mid;
  return [(pre||"")+`<div class=h>Step</div>Measure terminal <span class=k>${e(p.t)}</span> to GND (1000). <div class=ref>This point is after: ${e(p.after)} · monitored by ${e(p.inp)}</div>`,[["24 V present ✔","__m_ok"],["0 V ✘","__m_bad"],["Stop guide","__m_stop"]]]}
 // ---------- matcher ----------
 const SYN=[
+ [/re-?open|keeps? opening|bounc|opens? again/,{f:[23,12],seg:["PC","FT","VF5A"],door:1,w:2}],
+ [/stays? open|stuck open|won'?t shut|left open|open all the time/,{f:[23,25,4],door:1,w:2,p:["F06","T02"]}],
+ [/door time ?out|door timeout|door took/,{f:[25,26,6,5],door:1,w:2}],
+ [/door lock|lock fault|locks? not|unlock/,{f:[11,26],seg:["SCA"],door:1,w:2}],
+ [/sliding|fermator|operator|vf5|door motor|door drive|car door/,{f:[25,12,22,23],seg:["VF5A","PC"],door:1,w:1.5}],
+ [/light ?curtain|photo ?cell|beam|safety edge/,{door:1}],
+ [/doors?/,{door:1,w:0}],
+
  [/won'?t move|wont move|not moving|doesn'?t move|dead|stuck|no run|won'?t go|wont go|not running|out of service/,{f:[7,8,9,10,11,12,13,14,15,1,28],w:2,chain:1}],
  [/safety (chain|circuit|line|series)|chain (open|broken)|9fs|\bpra\b/,{chain:3,f:[13,14,15,7,8,9]}],
  [/pit|pit (switch|stop)|stf|saf\b|spu|prop/,{f:[14,8],seg:["SAF","STF","SPU"],w:2}],
@@ -2543,7 +3212,7 @@ const SYN=[
  [/door open light|door open|landing door open|door.*left open/,{f:[4,10,11],w:1.5,seg:["SAC","SCA"]}],
  [/lock|interlock|sca\b|catenacc/,{f:[11,26],seg:["SCA"],w:2}],
  [/sac\b|door closed contact/,{f:[10],seg:["SAC"],w:2}],
- [/photo ?cell|light ?curtain|\bft1?\b|vega|beam/,{f:[12,23],seg:["FT"],w:2}],
+ [/photo ?cell|light ?curtain|\bft1?\b|vega|beam/,{f:[12,23],seg:["FT","PC"],w:2}],
  [/car door|gate|\bpc1?\b/,{f:[12,25],seg:["FT"],w:1.5}],
  [/level|levell?ing|not level|stops? (high|low|short)|step|mis.?level|magnet|\bia\b|\bid\b/,{f:[16,17,18,19,20,30],w:2}],
  [/overrun|over.?travel|over ?run|\bsec\b|limit/,{f:[9,15,1],seg:["SEC"],w:2}],
@@ -2561,7 +3230,7 @@ const SYN=[
  [/fire|firefight/,{p:["F27","F28"],w:2}],
 ];
 function score(q){const res={f:{},seg:{},io:{},p:{},chain:0};
- for(const[re,o]of SYN)if(re.test(q)){const w=o.w||1;(o.f||[]).forEach((c,i)=>res.f[c]=(res.f[c]||0)+w*(1-i*0.06));(o.seg||[]).forEach(s=>res.seg[s]=(res.seg[s]||0)+w);(o.io||[]).forEach(s=>res.io[s]=(res.io[s]||0)+w);(o.p||[]).forEach(s=>res.p[s]=(res.p[s]||0)+w);res.chain+=o.chain||0}
+ for(const[re,o]of SYN)if(re.test(q)){const w=o.w||1;(o.f||[]).forEach((c,i)=>res.f[c]=(res.f[c]||0)+w*(1-i*0.06));(o.seg||[]).forEach(s=>res.seg[s]=(res.seg[s]||0)+w);(o.io||[]).forEach(s=>res.io[s]=(res.io[s]||0)+w);(o.p||[]).forEach(s=>res.p[s]=(res.p[s]||0)+w);res.chain+=o.chain||0;res.door=(res.door||0)+(o.door||0)}
  // fuzzy token overlap against fault names/meanings
  const toks=q.split(/[^a-z0-9]+/).filter(t=>t.length>3);
  if(toks.length)D.faults.forEach(f=>{const hay=(f.name+" "+f.meaning).toLowerCase();let s=0;toks.forEach(t=>{if(hay.includes(t))s+=0.6});if(s)res.f[f.code]=(res.f[f.code]||0)+s});
@@ -2575,17 +3244,17 @@ function answer(raw){let q=raw.toLowerCase().trim().replace(/[’']/g,"'");
  if(/reset/.test(q)&&!/\b(e|err|error|code)\s*\d/.test(q))return [RESET,[["Show safety chain","safety chain"]]];
  // between terminals
  let m=q.match(/between (?:terminal |term |t)?([\d\/]+|9fs) (?:and|&|-|to) (?:terminal |term |t)?([\d\/]+|9fs)/);
- if(m){const ord=["1","1/1","2","2/1","2/2","2/3","3","5","6","6/1","9","9fs"],a=ord.indexOf(m[1]),b=ord.indexOf(m[2]);
+ if(m){const ord=["1","1/1","2","2/1","2/2","2/3","3","3/1","4","5","6","6/1","9","9fs"],a=ord.indexOf(m[1]),b=ord.indexOf(m[2]);
   if(a<0||b<0)return [`I don't have terminal ${e(m[a<0?1:2])} in the safety chain model. Known: ${ord.join(", ")}.`,[["Show safety chain","safety chain"]]];
   const [x,y]=a<b?[a,b]:[b,a],idx=t=>{t=t.split(/\s|→|\(/)[0].trim().toLowerCase();return ord.indexOf(t)};
-  let on=false,out=[];D.chain_model.forEach(s=>{const i=idx(s.t_in),o=idx(s.t_out);if(i>=0&&i>=y)on=false;if(i>=0&&i>=x&&i<y)on=true;if(on)out.push(s);if(o>=0&&o>=y)on=false});
-  const list=out.filter(s=>s.id!="END");
-  return [`<h3>Between terminal ${ord[x]} and ${ord[y]}</h3>${list.length?`<ol>${list.map(s=>`<li><span class=k>${e(s.device)}</span> – ${e(s.desc)} <span class=ref>[${e(s.location)}]</span></li>`).join("")}</ol>`:"Nothing found."}<div class=cv>⚠ Series order from sheet 7B/32A (light-curtain variant); car-door versions differ after 6.</div><div class=ref>📄 Sheet 7B (PDF p11), 32A (PDF p65)</div>`,[["Meter it out","meter it out"],["Show safety chain","safety chain"]]]}
+  let on=false,out=[];CM().forEach(s=>{const i=idx(s.t_in),o=idx(s.t_out);if(i>=0&&i>=y)on=false;if(i>=0&&i>=x&&i<y)on=true;if(on)out.push(s);if(o>=0&&o>=y)on=false});
+  const list=out.filter(s=>(idx(s.t_out)<0||idx(s.t_out)<=y)&&s.id!="END"&&(!/branch/.test(s.monitor)||x>=6&&y<=8));
+  return [`<h3>Between terminal ${ord[x]} and ${ord[y]}</h3>${list.length?`<ol>${list.map(s=>`<li><span class=k>${e(s.device)}</span> – ${e(s.desc)} <span class=ref>[${e(s.location)}]</span></li>`).join("")}</ol>`:"Nothing found."}<div class=cv>⚠ Series order – ${TN()}. Door-mainboard VF5+ branch (3→3/1→4, IS4) is shown only if you ask between 3 and 4.</div><div class=ref>📄 ${TYPE=='sliding'?'Sheet 7D (PDF p13), 32D (PDF p68)':'Sheet 7B (PDF p11), 32A (PDF p65)'}</div>`,[["Meter it out","meter it out"],["Show safety chain","safety chain"]]]}
  // IS input
  m=q.match(/\bis\s?([1-8])\b/);
- if(m){const n=+m[1],io=D.io.find(x=>x.terminal.includes("IS"+n)),segs=D.chain_model.filter(s=>s.monitor.startsWith("IS"+n+" "));
+ if(m){const n=+m[1],io=D.io.find(x=>x.terminal.includes("IS"+n)),segs=CM().filter(s=>s.monitor.startsWith("IS"+n+" "));
   const errs=[...new Set(segs.flatMap(s=>[s.err_move,s.err_stop]).filter(x=>x!=null))];
-  const pre=D.chain_model.slice(0,D.chain_model.findIndex(s=>s.monitor.startsWith("IS"+n+" ")));
+  const pre=CM().slice(0,CM().findIndex(s=>s.monitor.startsWith("IS"+n+" ")));
   return [`<h3>IS${n} ${/off|0|missing|lost|out|open/.test(q)?"off / open":""}</h3>${io?ioHTML(io):""}
   ${segs.length?`<div class=h>Contacts that feed IS${n} (open here = IS${n} off)</div><ol>${segs.map(s=>`<li><span class=k>${e(s.device)}</span> – ${e(s.desc)} <span class=ref>[${e(s.location)}] ${e(s.t_in)}→${e(s.t_out)}</span></li>`).join("")}</ol>`:""}
   ${pre.length?`<div class=ref>If IS${n} is off but earlier inputs (${[...new Set(pre.map(s=>s.monitor.split(" ")[0]))].join(", ")}) are on, the break is in the list above.</div>`:""}
@@ -2594,7 +3263,7 @@ function answer(raw){let q=raw.toLowerCase().trim().replace(/[’']/g,"'");
  if(/safety (chain|circuit|line|series)|safety contacts|\bsic\b/.test(q)&&!/open|broken|won'?t|fault|trip/.test(q))return [chainHTML(),[["Meter it out","meter it out"],["Reset steps","reset steps"],["What's between 2 and 3","between 2 and 3"]]];
  // error code
  m=q.match(/\b(?:e|err|error|code|fault)\s*[-#:]?\s*0?(\d{1,2})\b/)||q.match(/^0?(\d{1,2})$/);
- if(m){const c=+m[1],f=FX(c);if(f){const near=[c-1,c+1].filter(FX);return [faultHTML(f),[["Reset steps","reset steps"],...(D.chain_model.some(s=>s.err_move==c||s.err_stop==c)?[["Meter it out","meter it out"]]:[]),...near.map(n=>["E "+pad(n),"e"+n])]]}
+ if(m){const c=+m[1],f=FX(c);if(f){const near=[c-1,c+1].filter(FX);return [faultHTML(f),[["Reset steps","reset steps"],...(CM().some(s=>s.err_move==c||s.err_stop==c)?[["Meter it out","meter it out"]]:[]),...near.map(n=>["E "+pad(n),"e"+n])]]}
   return [`The manual lists codes E 00–E 31 only; there's no E ${e(m[1])}. I won't guess.`,[["List all faults","__browse_faults"]]]}
  // parameters
  m=q.match(/\b(mp|np|pp|f|t|m)\s*>?\s*0?(\d{1,2})\b/);
@@ -2609,21 +3278,21 @@ function answer(raw){let q=raw.toLowerCase().trim().replace(/[’']/g,"'");
  const km=q.match(/\bk\s?(\d{1,2})\b/);if(km)hits.push(...D.io.filter(x=>x.terminal.toUpperCase().split(" ")[0]=="K"+km[1]));
  ["apa","apb","cp","ax","bkd","bat","lc","pnet","9fs"].forEach(r=>{if(new RegExp("\\b"+r+"\\b").test(q))hits.push(...D.io.filter(x=>x.terminal.toLowerCase().split(/[ /]/).includes(r)))});
  // chain device names
- const segHit=D.chain_model.filter(s=>s.id!="END"&&s.id!="FC_IS4"&&new RegExp("\\b"+s.id.toLowerCase()+"\\b").test(q));
+ const segHit=CM().filter(s=>s.id!="END"&&s.id!="FC_IS4"&&new RegExp("\\b"+s.id.toLowerCase()+"\\b").test(q));
  hits=[...new Set(hits)];
  const sc=score(q);
  const ranked=Object.entries(sc.f).sort((a,b)=>b[1]-a[1]);
  const strongSym=ranked.length&&ranked[0][1]>=1.5;
  if(segHit.length&&!strongSym||segHit.length==1&&/what|where|which/.test(q)){return [segHit.map(segHTML).join("<hr>"),[...segHit.flatMap(s=>[s.err_stop,s.err_move]).filter(x=>x!=null).slice(0,2).map(c=>["E "+pad(c),"e"+c]),["Meter it out","meter it out"]]]}
- if(hits.length&&!strongSym){const extra=hits.flatMap(h=>D.chain_model.filter(s=>h.terminal.includes(s.monitor.split(" ")[0])&&/^IS/.test(s.monitor)).slice(0,0));
+ if(hits.length&&!strongSym){const extra=hits.flatMap(h=>CM().filter(s=>h.terminal.includes(s.monitor.split(" ")[0])&&/^IS/.test(s.monitor)).slice(0,0));
   return [hits.slice(0,4).map(ioHTML).join("<hr>"),hits.some(h=>/IS\d/.test(h.terminal))?[["Show safety chain","safety chain"]]:[["Show safety chain","safety chain"],["Reset steps","reset steps"]]]}
  if(strongSym||sc.chain>=2){const top=ranked.slice(0,3).map(([c])=>FX(+c));
   let h=`<h3>Most likely</h3>`;
   if(sc.chain>=1)h+=`<div>This sounds like a <b>safety chain</b> problem. Read 'sic:' on the programmer (first 0 bit = open section) and the E menu (last error).</div>`;
-  const segs=Object.keys(sc.seg).map(id=>D.chain_model.find(s=>s.id==id)).filter(Boolean);
+  const segs=Object.keys(sc.seg).map(id=>CM().find(s=>s.id==id)).filter(Boolean);
   if(top[0])h+=`<div class=h>Best match</div>`+faultHTML(top[0]);
   if(segs.length)h+=`<div class=h>Contacts to check</div><ul>${segs.map(s=>`<li><span class=k>${e(s.device)}</span> – ${e(s.desc)} <span class=ref>[${e(s.location)}] ${e(s.t_in)}→${e(s.t_out)}, ${e(s.monitor)}</span></li>`).join("")}</ul>`;
-  const io=Object.keys(sc.io).map(t=>D.io.find(x=>x.terminal==t)).filter(Boolean);if(io.length)h+=`<div class=h>Related</div>`+io.map(ioHTML).join("<hr>");
+  if(sc.door&&TYPE=='sliding')h+=doorHTML();const io=Object.keys(sc.io).map(t=>D.io.find(x=>x.terminal==t)).filter(Boolean);if(io.length)h+=`<div class=h>Related</div>`+io.map(ioHTML).join("<hr>");
   const ps=Object.keys(sc.p).map(k=>D.params.find(p=>p.menu+pad(p.num)==k.replace(/(\d+)/,x=>pad(x)))).filter(Boolean);if(ps.length)h+=ps.map(parHTML).join("<hr>");
   h+=`<div class=cv>⚠ Matched on keywords – confirm with the E menu (last error code) on the programmer.</div>`;
   const ch=top.slice(1).map(f=>[`E ${pad(f.code)} ${f.name.replace(/^ERR[_-]/,"")}`,"e"+f.code]);
@@ -2634,8 +3303,9 @@ function answer(raw){let q=raw.toLowerCase().trim().replace(/[’']/g,"'");
  const tk=q.split(/[^a-z0-9]+/).filter(t=>t.length>2);
  const weak=[...D.params.filter(p=>tk.some(t=>p.desc.toLowerCase().includes(t))).slice(0,3).map(p=>[p.menu+" "+(typeof p.num=="number"?pad(p.num):p.num),p.menu+p.num]),...ranked.slice(0,2).map(([c])=>["E "+pad(c),"e"+c])];
  return [`<h3>Not sure</h3>I couldn't match that confidently to anything in the ED1 manual or HLB schematic, so I won't guess. Try an error code from the E menu (e.g. "E 14"), an input ("IS3 off"), a terminal ("J3,5"), a parameter ("F06") or a symptom ("doors won't close").`,[...weak.slice(0,3),["Safety chain","safety chain"],["Help","help"]]]}
+function doorHTML(){const x=D.door;return `<div class=h>Sliding door – relevant I/O & settings</div><ul>${x.outputs.map(o=>`<li>${e(o)}</li>`).join("")}</ul><ul>${x.params.map(o=>`<li>${e(o)}</li>`).join("")}</ul><div class=ref>Programmer: watch out0/out1 (open A/B, close) and sic: bits 4 (VF5+) and 8 (PC/PC1) while cycling the door. 📄 ${x.sheets.map(e).join("; ")}</div><div class=cv>⚠ Inferred: the manual has no sliding-door troubleshooting procedure; the Fermator operator's own fault codes are not in these documents.</div>`}
 const HELP=`<h3>G'day – ED1 / HLB fault bot</h3>Type what you're seeing. Examples:<ul><li>"E 14" or "err 5" – error code from the E menu</li><li>"lift won't move, door open light on"</li><li>"IS3 off" / "safety chain open" / "meter it out"</li><li>"what's between terminal 2 and 3"</li><li>"what is F06", "J3,5", "K9", "F5 fuse"</li></ul><div class=ref>Works offline. Sources: ED1 manual E-DOC-00000035 Rev01.4, HLB schematic E-SCH-00000015 Rev08.</div>`;
-const STARTCH=[["Lift won't move","lift won't move"],["Safety chain open","safety chain open"],["Meter it out","meter it out"],["E 14","e14"],["Doors won't close","doors won't close"],["Reset steps","reset steps"]];
+const STARTCH=[["Lift won't move","lift won't move"],["Safety chain open","safety chain open"],["Meter it out","meter it out"],["E 14","e14"],["Doors won't close","doors won't close"],["Door keeps reopening","door keeps reopening"],["Reset steps","reset steps"]];
 function ask(q,label){if(q.startsWith("__browse_")){openMenu(q.slice(9));return}
  bub(e(label||q),true);const [h,c]=answer(q);bub(h);chips(c)}
 $("#f").onsubmit=ev=>{ev.preventDefault();const v=$("#q").value.trim();if(!v)return;$("#q").value="";ask(v)};
@@ -2645,5 +3315,6 @@ const T=[["faults","Faults"],["chain_model","Safety chain"],["io","I/O"],["param
 const BR={faults:f=>`<details><summary><b>E ${pad(f.code)}</b> ${e(f.name)}</summary>${faultHTML(f)}</details>`,chain_model:segHTML,io:ioHTML,params:parHTML,diagnostics:x=>`<span class=k>${e(x.screen)}</span> ${e(x.desc)}`,pages:x=>`<span class=k>PDF p${x.pdf_page}</span> ${x.sheet?"· sheet "+e(x.sheet):""}<div>${e(x.title)}</div>`,tips:x=>e(x)};
 function openMenu(k){k=k||"faults";$("#menu").classList.add("on");$("#mnav").innerHTML=T.map(([a,l])=>`<button class=ib data-k=${a} style="${a==k?"background:var(--acc);color:#fff":""}">${l}</button>`).join("");$("#mout").innerHTML=D[k].map(x=>`<div class=c>${BR[k](x)}</div>`).join("")}
 $("#mnav").onclick=ev=>{if(ev.target.dataset.k)openMenu(ev.target.dataset.k)};$("#mbtn").onclick=()=>openMenu();$("#mclose").onclick=()=>$("#menu").classList.remove("on");
+$('#lt').value=TYPE;$('#lt').onchange=ev=>{TYPE=localStorage.liftType=ev.target.value;M=null;bub(`Lift type set to <b>${TN()}</b>. Safety chain, meter-out and answers now follow ${TYPE=='sliding'?'sheets 7D/32D':'sheets 7B/32A'}.`);chips([["Show safety chain","safety chain"]])};
 bub(HELP);chips(STARTCH);
 </script></body></html>
